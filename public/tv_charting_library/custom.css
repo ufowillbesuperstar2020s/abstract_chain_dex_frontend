@@ -1,0 +1,33 @@
+/* tv header toggle styles */
+.tvseg-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+.tvseg-btn {
+  padding: 0px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #9aaac0;
+  cursor: pointer;
+}
+.tvseg-btn:hover {
+  color: #cdd7e1;
+}
+.tvseg-sep {
+  color: #657083;
+  user-select: none;
+}
+.tvseg-btn.is-active {
+  color: #10b981;
+  border-color: transparent;
+  background: transparent;
+}
+.tvseg-btn.is-inactive {
+  color: #9aaac0;
+  border-color: transparent;
+  background: transparent;
+}
