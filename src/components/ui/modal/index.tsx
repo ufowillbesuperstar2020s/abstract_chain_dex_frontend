@@ -1,87 +1,79 @@
-"use client";
-import React, { useRef, useEffect } from "react";
+// src/components/ui/modal/index.tsx
+'use client';
 
-interface ModalProps {
+import { ReactNode, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+
+export type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  children: ReactNode;
+
+  /** Applied to the FLEX WRAPPER that centers the panel (not to the panel itself). */
   className?: string;
-  children: React.ReactNode;
-  showCloseButton?: boolean;
-  isFullscreen?: boolean;
 
-  // NEW:
-  align?: "center" | "top";           // default: "center"
-  radius?: "none" | "lg" | "3xl";      // default: "3xl"
-  showBackdrop?: boolean;              // default: true
-  closeVariant?: "ghost" | "solid";    // default: "ghost"
-}
+  /** Applied to the overlay element. */
+  overlayClassName?: string;
 
-export const Modal: React.FC<ModalProps> = ({
+  /** CSS selector or element to portal into. */
+  portalTo?: string | HTMLElement;
+
+  /** Close when clicking the overlay. Default: true */
+  closeOnOverlayClick?: boolean;
+
+  /** Vertically center or stick to top. Default: 'top' */
+  align?: 'top' | 'center';
+};
+
+export function Modal({
   isOpen,
   onClose,
   children,
-  className = "",
-  showCloseButton = true,
-  isFullscreen = false,
-  align = "center",
-  radius = "3xl",
-  showBackdrop = true,
-  closeVariant = "ghost",
-}) => {
-  const modalRef = useRef<HTMLDivElement>(null);
-
+  className,
+  overlayClassName,
+  portalTo = 'body',
+  closeOnOverlayClick = true,
+  align = 'top'
+}: ModalProps) {
+  // ESC to close
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    if (isOpen) document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
 
+  // lock body scroll
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    if (!isOpen) return;
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = overflow;
+    };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  const wrapperClass =
-    align === "top"
-      ? "fixed inset-0 z-99999 flex justify-center items-start pt-10"
-      : "fixed inset-0 z-99999 flex justify-center items-center";
+  const target = typeof portalTo === 'string' ? (document.querySelector(portalTo) ?? document.body) : portalTo;
 
-  const radiusClass =
-    radius === "none" ? "rounded-none" : radius === "lg" ? "rounded-lg" : "rounded-3xl";
+  const overlayCls = overlayClassName ?? 'fixed inset-0 z-[998] bg-black/60';
+  const wrapperCls = [
+    'fixed inset-0 z-[999] flex px-4',
+    align === 'center' ? 'items-center justify-center' : 'items-start justify-center',
+    // no default width/rounded/padding here — your child controls that!
+    className ?? ''
+  ].join(' ');
 
-  const contentClasses = isFullscreen
-    ? "w-full h-full"
-    : `relative bg-white dark:bg-gray-900 ${radiusClass}`;
-
-  return (
-    <div className={wrapperClass}>
-      {showBackdrop && (
-        <div
-          className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-      )}
-
-      <div
-        ref={modalRef}
-        className={`${contentClasses} ${className}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {showCloseButton && (
-          <button
-            aria-label="Close"
-            onClick={onClose}
-            className={`absolute right-4 top-4 text-white/70 hover:text-white focus:outline-none
-              ${closeVariant === "solid" ? "bg-white/10 hover:bg-white/15 rounded-full p-2" : ""}`}
-          >
-          </button>
-        )}
-        <div>{children}</div>
+  const node = (
+    <div className={overlayCls} onClick={closeOnOverlayClick ? onClose : undefined} aria-hidden>
+      <div className={wrapperCls} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+        {children}
       </div>
     </div>
   );
-};
+
+  return createPortal(node, target);
+}
+
+export default Modal;
