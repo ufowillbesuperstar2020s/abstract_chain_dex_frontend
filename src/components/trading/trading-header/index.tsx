@@ -102,7 +102,7 @@ export default function TradingHeader() {
           {/* balance pill */}
           <div
             aria-label="balance"
-            className="balance cq min-w-0 items-center gap-2 overflow-hidden rounded-md border border-white/10 bg-white/10 px-2 md:flex"
+            className="balance cq min-w-0 items-center gap-2 overflow-hidden rounded-md bg-white/10 px-2 md:flex"
           >
             <Image
               src="/images/logo/ethereum_logo.svg"

@@ -6,6 +6,8 @@ import type { TradeType, TabItem, PresetTabItem } from './types';
 import { TABS, PRESET_TABS } from './types';
 import Image from 'next/image';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
+import TradeExeSettingModal from '@/components/trading/modal/TradeExeSettingModal';
+import { useModal } from '@/hooks/useModal';
 
 export default function TradeInterface({
   tradeType,
@@ -31,6 +33,9 @@ export default function TradeInterface({
 
   const tokenMetadata = useTokenInfoStore((s) => s.tokenMetadata);
   const tokenSymbol = tokenMetadata?.symbol ?? 0;
+
+  const { isOpen, openModal, closeModal } = useModal();
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="text-white/80">
@@ -112,9 +117,9 @@ export default function TradeInterface({
             Off
           </span>
         </div>
-        <div className="flex h-10 items-end">
+        <button className="flex h-10 items-end" onClick={openModal}>
           <Image width={10} height={10} src="/images/icons/options.svg" alt="token" className="h-6 w-6 object-cover" />
-        </div>
+        </button>
       </div>
 
       {/* Submit button – single large rounded bar */}
@@ -256,6 +261,9 @@ export default function TradeInterface({
           </div>
         </div>
       </div>
+
+      {/* modal */}
+      <TradeExeSettingModal isOpen={isOpen} onClose={closeModal} />
     </div>
   );
 }

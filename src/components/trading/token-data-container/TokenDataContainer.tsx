@@ -130,7 +130,7 @@ export default function TokenDataContainer({ interval, onIntervalChange }: Props
                 <Image
                   width={40}
                   height={40}
-                  src="/images/icons/bela_token.png"
+                  src="/images/icons/bela_token.svg"
                   alt="token"
                   className="h-12 w-12 object-cover"
                 />

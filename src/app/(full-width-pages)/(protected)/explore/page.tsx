@@ -38,7 +38,7 @@ type Sort = { key: SortKey; dir: 'asc' | 'desc' };
 // --- mock data (replace with your real fetcher) ------------------------------
 const mock: TokenRow[] = Array.from({ length: 12 }).map((_, i) => ({
   address: `0xIND${i.toString(16).padStart(4, '0')}16z`,
-  iconUrl: `/images/icons/bela_token.png`,
+  iconUrl: `/images/icons/bela_token.svg`,
   symbol: i % 3 === 1 ? 'IND2b12y' : 'IND1a16z',
   name: i % 3 === 1 ? 'USA Medium Blend' : i % 4 === 0 ? 'India Large Cap' : 'India Large Growth',
   ageMinutes: 30 + (i % 4) * 5,

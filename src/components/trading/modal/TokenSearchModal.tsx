@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Modal from '@/components/ui/modal';
+import Image from 'next/image';
 
 // ---- types ----
 export type TokenSearchItem = {
   id: string;
   name: string;
   symbol: string;
+  token_address: string;
   price?: number;
   marketCap?: string;
   ago?: string;
@@ -39,8 +41,24 @@ async function searchTokens(q: string): Promise<TokenSearchItem[]> {
   // wang_const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { cache: 'no-store' }).then(r => r.json());
   // wang_return res.items as TokenSearchItem[];
   return [
-    { id: '1', name: 'IND1a16z', symbol: 'IND', price: 0.00136, marketCap: '$68.79K', ago: '31m' },
-    { id: '2', name: 'IND1a16z', symbol: 'IND', price: 0.00136, marketCap: '$68.79K', ago: '31m' }
+    {
+      id: '1',
+      name: 'ABSTER',
+      symbol: 'ABSTER',
+      token_address: '0xc325b7e2736a5202bd860f5974d0aa375e57ede5',
+      price: 0.00136,
+      marketCap: '$68.79K',
+      ago: '31m'
+    },
+    {
+      id: '2',
+      name: 'Noot Noot',
+      symbol: 'NOOT',
+      token_address: '0x85ca16fd0e81659e0b8be337294149e722528731',
+      price: 0.00136,
+      marketCap: '$68.79K',
+      ago: '31m'
+    }
   ];
 }
 
@@ -126,11 +144,11 @@ export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery
       align="top"
       closeOnOverlayClick
     >
-      <div className="absolute top-24 left-1/2 h-[720px] w-[968px] -translate-x-1/2 overflow-hidden rounded-3xl bg-gradient-to-br from-[rgba(0,111,80,1)] via-[rgba(34,36,38,1)] via-38% to-[rgba(34,36,38,1)] to-100% text-white shadow-lg backdrop-blur-xl">
+      <div className="absolute top-1/2 left-1/2 h-[720px] w-[968px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-4xl bg-gradient-to-br from-[rgba(0,111,80,1)] via-[rgba(34,36,38,1)] via-38% to-[rgba(34,36,38,1)] to-100% text-white shadow-lg backdrop-blur-xl">
         {/* Top input row */}
-        <div className="flex w-full flex-col items-center">
-          <div className="mt-6 mb-2 w-[80%] max-w-xl">
-            <div className="flex h-14 items-center gap-3 rounded-xl border-2 border-white/25 px-4">
+        <div className="flex w-full flex-col">
+          <div className="mt-8 mb-2 w-[90%]">
+            <div className="ml-10 flex h-14 items-center gap-3 rounded-xl border-2 border-white/25 px-4">
               <i className="fa-solid fa-magnifying-glass text-white/70" aria-hidden />
               <input
                 ref={inputRef}
@@ -143,19 +161,19 @@ export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery
           </div>
         </div>
 
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-8 right-8">
           <button type="button" onClick={onClose} aria-label="Close" className="ml-2 rounded p-1 hover:bg-white/10">
             <i className="fa-solid fa-xmark text-xl" />
           </button>
         </div>
 
         {/* Results */}
-        <div className="max-h-[70vh] overflow-y-auto">
+        <div className="mt-5 ml-10 max-h-[70vh] overflow-y-auto">
           {!q && (
             <>
-              <div className="border-b border-white/10 px-5 py-3 text-sm text-white/70">History</div>
+              <div className="py-3 text-3xl text-white/80">History</div>
               {history.length === 0 ? (
-                <div className="px-5 py-6 text-white/50">No recent searches.</div>
+                <div className="py-6 text-xl text-white/50">No recent searches.</div>
               ) : (
                 history.map((it, idx) => (
                   <ResultRow key={it.id} item={it} active={idx === active} onClick={() => pick(it)} />
@@ -165,9 +183,9 @@ export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery
           )}
           {q && (
             <>
-              <div className="border-b border-white/10 px-5 py-3 text-sm text-white/70">Results</div>
-              {items.length === 0 ? (
-                <div className="px-5 py-6 text-white/50">No matches.</div>
+              <div className="border-white/10 py-3 text-3xl text-white/80">Results</div>
+              {items.length === 2 ? (
+                <div className="py-6 text-xl text-white/50">No matches.</div>
               ) : (
                 items.map((it, idx) => (
                   <ResultRow key={it.id} item={it} active={idx === active} onClick={() => pick(it)} />
@@ -186,16 +204,37 @@ function ResultRow({ item, active, onClick }: { item: TokenSearchItem; active?: 
   return (
     <button
       onClick={onClick}
-      className={`flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/5 ${active ? 'bg-white/10' : ''}`}
+      className={`flex w-[95%] items-center gap-3 rounded-md border-b border-white/10 py-3 pr-5 pl-1 text-left hover:bg-white/5 ${active ? 'bg-white/10' : ''}`}
     >
-      <img src={item.avatarUrl ?? '/placeholder-token.png'} alt="" className="h-10 w-10 rounded-md object-cover" />
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-semibold">{item.name}</div>
-        <div className="truncate text-sm text-white/60">{item.symbol} • India Large…</div>
+      <Image
+        src="/images/icons/bela_token.svg"
+        width={12}
+        height={12}
+        alt=""
+        className="h-12 w-12 rounded-md object-cover"
+      />
+      <div className="basis-[60%] text-white">
+        <div className="truncate text-sm">
+          <span className="text-xl text-white">{item.symbol}</span>
+          <span className="ml-2 text-lg text-white/50">{item.name}</span>
+        </div>
+        <div className="text-md truncate font-semibold text-white/50">{item.token_address}</div>
       </div>
-      <span className="rounded bg-emerald-600/20 px-2 py-0.5 text-xs text-emerald-300">{item.ago ?? '—'}</span>
-      <span className="w-24 text-right text-sm">${item.price?.toFixed(6) ?? '—'}</span>
-      <span className="w-24 text-right text-sm">{item.marketCap ?? '—'}</span>
+      <div className="basis-[15%] self-start">
+        <span className="inline-flex items-center rounded-xl bg-emerald-600/20 px-4 py-0.5 text-lg text-white">
+          <Image
+            src="/images/icons/sprout.svg"
+            width={16}
+            height={16}
+            alt=""
+            className="mr-2 h-4 w-4 rounded-full object-cover"
+          />
+          {item.ago ?? '—'}
+        </span>
+      </div>
+
+      <span className="w-24 basis-[20%] text-center text-xl">${item.price?.toFixed(6) ?? '—'}</span>
+      <span className="w-24 basis-[20%] text-center text-xl">{item.marketCap ?? '—'}</span>
     </button>
   );
 }

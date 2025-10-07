@@ -12,13 +12,13 @@ export default function User() {
   return (
     <div className="relative">
       {/* Pill */}
-      <div className="hidden h-9 items-center gap-2 rounded-md border border-white/10 bg-white/10 py-5 pr-1 pl-1 text-white/90 md:flex">
+      <div className="hidden h-9 items-center gap-2 rounded-md bg-white/10 py-5.5 pr-1 pl-1 text-white/90 md:flex">
         <Image
           src="/images/logo/user_profile_sample.svg"
           width={5}
           height={5}
           alt=""
-          className="h-9 w-9 rounded-full object-cover ring-1 ring-white/10"
+          className="h-8 w-8 rounded-full object-cover ring-1 ring-white/10"
           draggable={false}
         />
         <span className="max-w-[140px] truncate text-base leading-none font-medium">Jane Doe</span>
