@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Buy from './buy';
 import Sell from './sell';
-import VolumeStats, { VolumeWindow } from '../VolumeStats';
+import VolumeStats from '../VolumeStats';
+import { type VolumeWindow } from '@/app/stores/tokenMetrics-store';
 
 enum TAB {
   BUY = 'BUY',

@@ -294,6 +294,32 @@
   }
 }
 
+/* Emerald near-black scrollbar */
+.scrollbar-emerald {
+  /* keeps layout stable when scrollbar appears */
+  scrollbar-gutter: stable both-edges;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #064e3b rgba(3, 37, 30, 0.35);
+}
+/* WebKit (Chrome, Edge, Safari) */
+.scrollbar-emerald::-webkit-scrollbar {
+  width: 10px;
+}
+.scrollbar-emerald::-webkit-scrollbar-track {
+  background: rgba(3, 37, 30, 0.35); /* emerald-near-black track */
+  border-radius: 8px;
+}
+.scrollbar-emerald::-webkit-scrollbar-thumb {
+  background: #064e3b; /* emerald-700-ish */
+  border-radius: 8px;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+}
+.scrollbar-emerald::-webkit-scrollbar-thumb:hover {
+  background: #065f46; /* hover a bit brighter */
+}
+
 /* third-party libraries CSS */
 .apexcharts-legend-text {
   @apply !text-gray-700 dark:!text-gray-400;

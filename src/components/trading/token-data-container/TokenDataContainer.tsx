@@ -35,8 +35,6 @@ type Props = {
 
 export default function TokenDataContainer({ interval, onIntervalChange }: Props) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
 
   // existing token info (name/symbol/address/decimals)
@@ -66,8 +64,6 @@ export default function TokenDataContainer({ interval, onIntervalChange }: Props
     if (!el) return;
     const left = el.scrollLeft > 0;
     const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
-    setCanLeft(left);
-    setCanRight(right);
     setHasOverflow(left || right || el.scrollWidth > el.clientWidth + 1);
   };
 

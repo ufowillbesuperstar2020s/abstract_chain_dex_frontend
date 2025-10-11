@@ -5,7 +5,11 @@ import { useEffect, useRef } from 'react';
 import {
   ChartingLibraryWidgetOptions,
   LanguageCode,
-  ResolutionString
+  ResolutionString,
+  IBasicDataFeed,
+  IDatafeedChartApi,
+  IExternalDatafeed,
+  IDatafeedQuotesApi
 } from '@public/tv_charting_library/charting_library/charting_library';
 
 function toTV(res: string): string {
@@ -23,6 +27,26 @@ function toTV(res: string): string {
   return m[res] ?? '1D';
 }
 
+/** Minimal widget methods we use from TradingView */
+type TVWidget = {
+  onChartReady(cb: () => void): void;
+  headerReady(): Promise<void>;
+  createButton(): HTMLElement;
+  remove(): void;
+};
+
+/** TradingView datafeed types that the widget accepts */
+type TVDatafeed = IBasicDataFeed | (IDatafeedChartApi & IExternalDatafeed & IDatafeedQuotesApi);
+
+/** Minimal shapes on window we rely on */
+type WindowWithTV = Window & {
+  TradingView?: {
+    widget: new (opts: ChartingLibraryWidgetOptions) => TVWidget;
+  };
+  // ✅ Make constructor return TVDatafeed (not unknown)
+  CustomDatafeed?: new (opts: { apiBase?: string; wsUrl?: string; pairAddress?: string }) => TVDatafeed;
+};
+
 export const TVChartContainer = (
   props: Partial<ChartingLibraryWidgetOptions> & {
     pairAddress?: string;
@@ -34,21 +58,25 @@ export const TVChartContainer = (
   const chartContainerRef = useRef<HTMLDivElement>(null) as React.MutableRefObject<HTMLInputElement>;
 
   useEffect(() => {
-    const w = window as any;
+    const w = window as unknown as WindowWithTV;
     if (!w.TradingView || !w.TradingView.widget) {
       console.warn('TradingView library not loaded yet.');
       return; // wait until page sets isScriptReady
     }
-
+    if (!w.CustomDatafeed) {
+      console.warn('CustomDatafeed not available yet.');
+      return;
+    }
     const tvResolution = toTV((props.externalResolution ?? props.interval) || '1d');
+    const datafeed: TVDatafeed = new w.CustomDatafeed({
+      apiBase: props.apiBase,
+      wsUrl: props.wsUrl,
+      pairAddress: props.pairAddress
+    });
 
     const widgetOptions: ChartingLibraryWidgetOptions = {
       symbol: props.symbol,
-      datafeed: new w.CustomDatafeed({
-        apiBase: props.apiBase,
-        wsUrl: props.wsUrl,
-        pairAddress: props.pairAddress
-      }),
+      datafeed,
       interval: tvResolution as ResolutionString,
       container: chartContainerRef.current,
       library_path: props.library_path,
@@ -67,11 +95,11 @@ export const TVChartContainer = (
       enabled_features: ['study_templates', 'seconds_resolution'],
       charts_storage_url: props.charts_storage_url,
       charts_storage_api_version: props.charts_storage_api_version,
-      client_id: (props as any).client_id,
-      user_id: (props as any).user_id,
-      fullscreen: Boolean((props as any).fullscreen),
-      autosize: Boolean((props as any).autosize),
-      theme: (props as any).theme,
+      client_id: props.client_id,
+      user_id: props.user_id,
+      fullscreen: Boolean(props.fullscreen),
+      autosize: Boolean(props.autosize),
+      theme: props.theme,
       custom_css_url: '/tv_charting_library/custom.css'
     };
     const tvWidget = new w.TradingView.widget(widgetOptions);

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTradesStore } from '@/app/stores/trades-store';
+import Spinner from '@/components/ui/Spinner';
 
 interface Props {
   pairAddress: string;
@@ -14,7 +15,9 @@ function pad2(n: number) {
 }
 function formatAbsolute(tsSec: number) {
   const d = new Date(tsSec * 1000);
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(
+    d.getMinutes()
+  )}:${pad2(d.getSeconds())}`;
 }
 function toRelative(tsSec: number) {
   const diffMs = Date.now() - tsSec * 1000;
@@ -33,29 +36,29 @@ function formatNumber(n: number, opts?: Intl.NumberFormatOptions) {
 }
 
 const ROW_H = 44;
+const PAGE_SIZE = 100;
 
 export default function TransactionTable({ pairAddress }: Props) {
+  // ---- data from store
   const trades = useTradesStore((s) => s.tradesByPair[pairAddress]);
-  const loading = useTradesStore((s) => s.loadingByPair[pairAddress]);
+  const loading = useTradesStore((s) => s.loadingByPair[pairAddress]); // initial/refresh loading
   const fetchAPI = useTradesStore((s) => s.fetchTrades);
+  // optional paged fetcher
+  const fetchTradesPaged: undefined | ((pair: string, index: number, limit?: number) => Promise<number>) =
+    useTradesStore((s) => s.fetchTradesPaged);
 
+  // ---- local ticking for Age mode
   const [, forceTick] = React.useState(0);
   type TimeMode = 'age' | 'time';
   const [timeMode, setTimeMode] = React.useState<TimeMode>('age');
 
-  // Tick every second for "Age"
   useEffect(() => {
     if (timeMode !== 'age') return;
     const id = setInterval(() => forceTick((t) => t + 1), 1000);
     return () => clearInterval(id);
   }, [timeMode]);
 
-  // Initial fetch
-  useEffect(() => {
-    fetchAPI(pairAddress, { force: true });
-  }, [pairAddress, fetchAPI]);
-
-  // Persist time mode
+  // ---- persist time mode
   useEffect(() => {
     const saved = window.localStorage.getItem('txTimeMode') as TimeMode | null;
     if (saved === 'age' || saved === 'time') setTimeMode(saved);
@@ -64,7 +67,7 @@ export default function TransactionTable({ pairAddress }: Props) {
     window.localStorage.setItem('txTimeMode', timeMode);
   }, [timeMode]);
 
-  // Map rows
+  // ---- map rows from store to display model
   const rows = useMemo(() => {
     if (!trades) return [];
     return trades.map((t) => {
@@ -84,7 +87,7 @@ export default function TransactionTable({ pairAddress }: Props) {
         txType: t.tx_type as string,
         price_usd: humanPriceUsd,
         amount: humanAmount,
-        totalUsd: totalUsd,
+        totalUsd,
         wallet: t.wallet_address as string,
         tx: t.tx_hash as string
       };
@@ -94,37 +97,104 @@ export default function TransactionTable({ pairAddress }: Props) {
   // ---------- Infinite scroll + live-prepend stability ----------
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const prevCountRef = useRef(0);
+  const prevFirstIdRef = useRef<string | null>(null);
+  const appendingRef = useRef(false); // <— NEW: true while loading next page
   const fetchingMoreRef = useRef(false);
+  const pageRef = useRef(0); // last loaded page index (0-based)
   const [hasMore, setHasMore] = React.useState(true);
+  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
 
-  // Keep view stable when new trades are prepended by store
+  // Keep view stable ONLY when rows were PREPENDED (live updates), not APPENDED
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
-    const prev = prevCountRef.current;
-    const curr = rows.length;
-    if (curr > prev) {
-      const nearTop = el.scrollTop <= 8;
-      const added = curr - prev;
-      if (!nearTop) el.scrollTop += added * ROW_H;
-      else el.scrollTop = 0;
-    }
-    prevCountRef.current = curr;
-  }, [rows.length]);
 
+    const prevLen = prevCountRef.current;
+    const currLen = rows.length;
+    const firstNow = rows[0]?.id ?? null;
+    const firstPrev = prevFirstIdRef.current;
+
+    if (currLen > prevLen) {
+      const added = currLen - prevLen;
+
+      // Detect prepend: first id changed -> new rows came at TOP
+      const wasPrepended = firstPrev && firstNow && firstNow !== firstPrev;
+
+      // Skip adjustments if we are appending pages (bottom adds)
+      if (wasPrepended && !appendingRef.current) {
+        const nearTop = el.scrollTop <= 8;
+        if (!nearTop) {
+          // Shift down by the height of the inserted rows to preserve viewport
+          el.scrollTop += added * ROW_H;
+        } else {
+          el.scrollTop = 0;
+        }
+      }
+      // If appended, do nothing so we remain at the same position (and NOT near-bottom).
+    }
+
+    prevCountRef.current = currLen;
+    prevFirstIdRef.current = firstNow;
+  }, [rows.length, rows, timeMode]);
+
+  // Initial fetch (page 0)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setHasMore(true);
+      pageRef.current = 0;
+      prevCountRef.current = 0;
+      prevFirstIdRef.current = null;
+
+      if (fetchTradesPaged) {
+        const got = await fetchTradesPaged(pairAddress, 0, PAGE_SIZE);
+        if (!mounted) return;
+        setHasMore(got === PAGE_SIZE);
+        if (scrollerRef.current) {
+          scrollerRef.current.scrollTop = 0;
+        }
+      } else {
+        await fetchAPI(pairAddress, { force: true, limit: PAGE_SIZE });
+        if (!mounted) return;
+        if (scrollerRef.current) {
+          scrollerRef.current.scrollTop = 0;
+        }
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [pairAddress]);
+
+  // Load next page at bottom
   const loadMore = useCallback(async () => {
-    if (fetchingMoreRef.current || !rows.length || !hasMore) return;
+    if (fetchingMoreRef.current || !hasMore) return;
+    if (!rows.length && !loading) return;
+
     fetchingMoreRef.current = true;
+    appendingRef.current = true; // <— tell the stabilizer effect this is an append
+    setIsLoadingMore(true);
     try {
-      const oldest = rows[rows.length - 1];
-      await fetchAPI(pairAddress, { before: oldest.ts, limit: 50 } as any);
-      const after = useTradesStore.getState().tradesByPair[pairAddress] ?? [];
-      if (after.length === rows.length) setHasMore(false);
+      if (fetchTradesPaged) {
+        const next = pageRef.current + 1;
+        const got = await fetchTradesPaged(pairAddress, next, PAGE_SIZE);
+        pageRef.current = next;
+        if (got < PAGE_SIZE) setHasMore(false);
+      } else {
+        // --- Fallback: ts-based paging (your current implementation) ---
+        const oldest = rows[rows.length - 1];
+        await fetchAPI(pairAddress, { before: oldest.ts, limit: PAGE_SIZE });
+        const after = useTradesStore.getState().tradesByPair[pairAddress] ?? [];
+        if (after.length === rows.length) setHasMore(false);
+      }
     } finally {
       fetchingMoreRef.current = false;
+      appendingRef.current = false; // <— back to normal
+      setIsLoadingMore(false);
     }
-  }, [rows, hasMore, fetchAPI, pairAddress]);
+  }, [fetchAPI, fetchTradesPaged, hasMore, loading, pairAddress, rows]);
 
+  // Scroll watcher (near bottom triggers loadMore)
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -171,7 +241,6 @@ export default function TransactionTable({ pairAddress }: Props) {
         </div>
       </div>
 
-      {/* SCROLLER (both X and Y) — header sticks to top of THIS container */}
       <div ref={scrollerRef} className="no-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
         <table className="min-w-full table-fixed text-sm">
           <colgroup>
@@ -180,7 +249,6 @@ export default function TransactionTable({ pairAddress }: Props) {
             ))}
           </colgroup>
 
-          {/* Sticky header — fixed within the scroller */}
           <thead className="sticky top-0 z-20 border-b border-white/10 bg-gray-900 dark:bg-gray-900">
             <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-semibold [&>th]:text-[rgba(130,140,154,1)]">
               <th className="text-left whitespace-nowrap">
@@ -213,68 +281,105 @@ export default function TransactionTable({ pairAddress }: Props) {
             </tr>
           </thead>
 
-          {/* Only the tbody flows */}
           <tbody className="font-semibold [&>tr>td]:px-3 [&>tr>td]:py-2">
-            {(!rows || rows.length === 0) && !loading ? (
+            {!rows || rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-white/50">
-                  No transactions
+                <td colSpan={8} className="px-3 py-10 text-center text-white/60">
+                  {loading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner className="h-5 w-5" />
+                      Loading…
+                    </span>
+                  ) : (
+                    'No transactions'
+                  )}
                 </td>
               </tr>
             ) : (
-              rows.map((r) => (
-                <tr
-                  key={r.id}
-                  className="odd:bg-rgb(34, 34, 34) border-b border-white/5 transition-colors even:bg-[rgba(119,136,159,0.04)] hover:bg-white/10"
-                  style={{ height: ROW_H }}
-                >
-                  <td className="whitespace-nowrap text-[rgba(154,170,192,1)]">
-                    {timeMode === 'age' ? toRelative(r.ts) : formatAbsolute(r.ts)}
-                  </td>
-                  <td
-                    className={`text-center font-medium ${
-                      r.txType === 'buy'
-                        ? 'text-emerald-300'
-                        : r.txType === 'sell'
-                          ? 'text-[rgba(255,68,0,1)]'
-                          : 'text-[rgba(154,170,192,1)]'
-                    }`}
+              <>
+                {rows.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="odd:bg-rgb(34, 34, 34) border-b border-white/5 transition-colors even:bg-[rgba(119,136,159,0.04)] hover:bg-white/10"
+                    style={{ height: ROW_H }}
                   >
-                    {r.txType}
-                  </td>
-                  <td className="text-left text-[rgba(154,170,192,1)]">${r.price_usd ?? '-'}</td>
-                  <td className="text-left text-[rgba(154,170,192,1)]">
-                    {r.amount == null ? '-' : formatNumber(r.amount, { maximumFractionDigits: 6 })}
-                  </td>
-                  <td className="text-left text-[rgba(154,170,192,1)]">
-                    {r.totalUsd == null
-                      ? '-'
-                      : formatNumber(r.totalUsd, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="text-left font-mono text-[rgba(154,170,192,1)]">
-                    <span className="mr-2">{r.wallet}</span>
-                  </td>
-                  <td>
-                    <div className="flex justify-end">
-                      <Link
-                        href={`https://abscan.org/tx/${r.tx}`}
-                        target="_blank"
-                        aria-label="View on explorer"
-                        className="inline-flex"
-                      >
-                        <Image width={16} height={16} src="/images/icons/tx_scan_link.svg" alt="" className="h-4 w-4" />
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                    <td className="whitespace-nowrap text-[rgba(154,170,192,1)]">
+                      {timeMode === 'age' ? toRelative(r.ts) : formatAbsolute(r.ts)}
+                    </td>
+                    <td
+                      className={`text-center font-medium ${
+                        r.txType === 'buy'
+                          ? 'text-emerald-300'
+                          : r.txType === 'sell'
+                            ? 'text-[rgba(255,68,0,1)]'
+                            : 'text-[rgba(154,170,192,1)]'
+                      }`}
+                    >
+                      {r.txType}
+                    </td>
+                    <td className="text-left text-[rgba(154,170,192,1)]">${r.price_usd ?? '-'}</td>
+                    <td className="text-left text-[rgba(154,170,192,1)]">
+                      {r.amount == null ? '-' : formatNumber(r.amount, { maximumFractionDigits: 6 })}
+                    </td>
+                    <td className="text-left text-[rgba(154,170,192,1)]">
+                      {r.totalUsd == null
+                        ? '-'
+                        : formatNumber(r.totalUsd, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="text-left font-mono text-[rgba(154,170,192,1)]">
+                      <span className="mr-2">{r.wallet}</span>
+                    </td>
+                    <td>
+                      <div className="flex justify-end">
+                        <Link
+                          href={`https://abscan.org/tx/${r.tx}`}
+                          target="_blank"
+                          aria-label="View on explorer"
+                          className="inline-flex"
+                        >
+                          <Image
+                            width={16}
+                            height={16}
+                            src="/images/icons/tx_scan_link.svg"
+                            alt=""
+                            className="h-4 w-4"
+                          />
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+                {isLoadingMore && (
+                  <tr>
+                    <td colSpan={8} className="px-3 py-4 text-center text-white/60">
+                      <span className="inline-flex items-center gap-2">
+                        <Spinner className="h-4 w-4" />
+                        Loading…
+                      </span>
+                    </td>
+                  </tr>
+                )}
+
+                {/* Optional hint / end markers */}
+                {!isLoadingMore && hasMore && (
+                  <tr>
+                    <td colSpan={8} className="px-3 py-3 text-center text-xs opacity-60">
+                      Scroll to load more
+                    </td>
+                  </tr>
+                )}
+                {!isLoadingMore && !hasMore && (
+                  <tr>
+                    <td colSpan={8} className="px-3 py-3 text-center text-xs opacity-60">
+                      No more trades
+                    </td>
+                  </tr>
+                )}
+              </>
             )}
           </tbody>
         </table>
-
-        <div className="py-3 text-center text-xs opacity-60">
-          {loading ? 'Loading…' : hasMore ? 'Scroll to load more' : 'No more trades'}
-        </div>
       </div>
     </div>
   );

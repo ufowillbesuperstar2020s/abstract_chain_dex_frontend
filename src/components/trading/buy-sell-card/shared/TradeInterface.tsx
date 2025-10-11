@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import TradeExeSettingModal from '@/components/trading/modal/TradeExeSettingModal';
 import { useModal } from '@/hooks/useModal';
+import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
 
 export default function TradeInterface({
   tradeType,
@@ -35,7 +36,8 @@ export default function TradeInterface({
   const tokenSymbol = tokenMetadata?.symbol ?? 0;
 
   const { isOpen, openModal, closeModal } = useModal();
-  const [open, setOpen] = useState(false);
+
+  const { slippagePct, fee, antiMev } = useTradeSettingsStore();
 
   return (
     <div className="text-white/80">
@@ -106,15 +108,15 @@ export default function TradeInterface({
               alt="token"
               className="h-4 w-4 object-cover"
             />
-            20%
+            {slippagePct}%
           </span>
           <span className="ml-2 flex flex-row items-center gap-1">
             <Image width={10} height={10} src="/images/icons/gas.svg" alt="token" className="h-5 w-5 object-cover" />
-            0.001
+            {fee}
           </span>
           <span className="ml-2 flex flex-row items-center gap-1">
             <Image width={10} height={10} src="/images/icons/robot.svg" alt="token" className="h-4 w-4 object-cover" />
-            Off
+            {antiMev ? 'On' : 'Off'}
           </span>
         </div>
         <button className="flex h-10 items-end" onClick={openModal}>
@@ -122,7 +124,6 @@ export default function TradeInterface({
         </button>
       </div>
 
-      {/* Submit button – single large rounded bar */}
       <button
         disabled={parsedAmount <= 0 || tokenSymbol == 0}
         onClick={() =>
@@ -144,8 +145,6 @@ export default function TradeInterface({
           : `Sell${tokenSymbol !== 0 ? ' ' + tokenSymbol : ''}`}
       </button>
 
-      {/* Stats strip (fills width, balanced left/right) */}
-      {/* Stats strip – evenly spaced, all left aligned */}
       <div className="mt-3 flex justify-between border-b text-sm dark:border-gray-600">
         {[
           ['Bought', '0'],

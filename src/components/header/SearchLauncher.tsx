@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useModal } from '@/hooks/useModal';
 import TokenSearchModal from '@/components/trading/modal/TokenSearchModal';
 
@@ -52,15 +52,7 @@ export default function SearchLauncher() {
       </button>
 
       {/* modal */}
-      <TokenSearchModal
-        isOpen={isOpen}
-        onClose={closeModal}
-        initialQuery=""
-        onPick={(it) => {
-          // wang_TODO: navigate or set app state
-          // wang_router.push(`/token/${it.id}`)
-        }}
-      />
+      <TokenSearchModal isOpen={isOpen} onClose={closeModal} initialQuery="" />
     </>
   );
 }

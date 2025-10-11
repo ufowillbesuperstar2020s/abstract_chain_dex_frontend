@@ -6,6 +6,7 @@ import axios, { AxiosResponse } from 'axios';
 import { useAccount, useSendTransaction } from 'wagmi';
 import { DEFAULT_TOKEN_ADDRESS } from '@/utils/constants';
 import { parseEther } from 'viem';
+import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
 
 type AbstractSwapRequest = {
   wallet_address: string;
@@ -20,13 +21,14 @@ const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? '';
 export default function Buy() {
   const { address } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
+  const slippagePct = useTradeSettingsStore((s) => s.slippagePct);
 
   return (
     <TradeInterface
       tradeType="BUY"
       onSubmit={async (p) => {
         const amount: string = p.amount.toString();
-        const slippage: number = 20; //wang_tmp
+        const slippage = Number.isFinite(slippagePct) ? slippagePct : 20;
 
         const amountInOfBigInt: bigint = parseEther(amount);
         const amountIn: string = amountInOfBigInt.toString();

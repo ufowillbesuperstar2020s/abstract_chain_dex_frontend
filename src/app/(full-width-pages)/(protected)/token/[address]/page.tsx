@@ -1,12 +1,9 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Script from 'next/script';
-import {
-  ChartingLibraryWidgetOptions,
-  ResolutionString
-} from '@public/tv_charting_library/charting_library/charting_library';
+import { ChartingLibraryWidgetOptions } from '@public/tv_charting_library/charting_library/charting_library';
 import '@public/tv_charting_library/datafeed.js';
 import TradingHeader from '@/components/trading/trading-header';
 import TokenDataContainer from '@/components/trading/token-data-container/TokenDataContainer';
