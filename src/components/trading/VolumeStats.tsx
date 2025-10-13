@@ -8,9 +8,9 @@ export type VolumeStatsProps = {
   className?: string;
 };
 
-export default function VolumeStats({ timeframe = '1h', className = '' }: VolumeStatsProps) {
+export default function VolumeStats({ className = '' }: VolumeStatsProps) {
   const getVolumes = useTokenMetricsStore((s) => s.getVolumes);
-  const { buys, sells } = getVolumes(timeframe);
+  const { buys, sells } = getVolumes();
 
   const fmtK = (n: number) => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;

@@ -49,7 +49,7 @@ export const useTokenInfoStore = create<TokenInfoState>((set, get) => ({
       const fromApis = res.data ?? {};
 
       const normalized: TokenMetadata = {
-        name: fromApis.name ?? 'Noot Noot',
+        token_name: fromApis.token_name ?? 'Noot Noot',
         symbol: fromApis.symbol ?? 'NOOT',
         decimals: fromApis.decimals ?? 8,
         address: fromApis.address ?? address

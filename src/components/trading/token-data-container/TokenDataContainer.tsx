@@ -1,4 +1,3 @@
-// src/components/trading/token-data-container/TokenDataContainer.tsx
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -84,7 +83,7 @@ export default function TokenDataContainer({ interval, onIntervalChange }: Props
 
   const scrollerPad = hasOverflow ? 'px-10 sm:px-12' : 'px-3 sm:px-4';
 
-  const name = tokenMetadata?.name ?? '—';
+  const name = tokenMetadata?.token_name ?? '—';
   const symbol = tokenMetadata?.symbol ?? '—';
   const address = tokenMetadata?.address ?? '—';
   const canCopy = address !== '—';
@@ -134,7 +133,7 @@ export default function TokenDataContainer({ interval, onIntervalChange }: Props
 
               <div className="min-w-0 flex-col items-start">
                 <div className="flex min-w-0 items-center gap-2">
-                  <h4 className="w-15 flex-1 shrink-0 text-lg leading-tight font-bold text-gray-800 dark:text-white/90">
+                  <h4 className="flex-1 shrink-0 text-lg leading-tight font-bold text-gray-800 dark:text-white/90">
                     {symbol}
                   </h4>
                   <div className="ml-auto flex max-w-[220px] min-w-0 items-center gap-1">

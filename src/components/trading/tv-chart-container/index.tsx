@@ -144,7 +144,7 @@ export const TVChartContainer = (
             b.addEventListener('click', () => {
               const idx = (Number(b.dataset.index) as 0 | 1) || 0;
               setActive(idx);
-              onChange && onChange(idx); // wang_no-op for now
+              onChange?.(idx);
             });
           });
 
@@ -173,7 +173,11 @@ export const TVChartContainer = (
       });
     });
 
-    return () => tvWidget && tvWidget.remove();
+    return () => {
+      if (tvWidget) {
+        tvWidget.remove();
+      }
+    };
   }, [
     props.symbol,
     props.interval,

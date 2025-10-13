@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get('q') ?? '';
   const chainId = searchParams.get('chain_id') ?? '2741'; // 2741 is Abstract chain id
-  const resolution = searchParams.get('resolution') ?? '1h';
+  const resolution = searchParams.get('resolution') ?? '1d';
   const index = searchParams.get('index') ?? '0';
   const limit = searchParams.get('limit') ?? '50';
 

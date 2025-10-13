@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/modal';
 import Image from 'next/image';
 import Spinner from '@/components/ui/Spinner';
@@ -82,7 +83,7 @@ async function searchTokens(
   opts?: { chainId?: number; resolution?: string; index?: number; limit?: number; signal?: AbortSignal }
 ) {
   const chainId = opts?.chainId ?? 2741;
-  const resolution = opts?.resolution ?? '1h';
+  const resolution = opts?.resolution ?? '1d';
   const index = opts?.index ?? 0;
   const limit = opts?.limit ?? 50;
 
@@ -138,6 +139,24 @@ export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery
   const seqRef = useRef(0); // to invalidate late responses
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  // ---- navigate to token page, close modal, and call onPick if provided
+  const goToken = useCallback(
+    (item: TokenSearchItem) => {
+      // optional: record history
+      setHistory((h) => {
+        const exists = h.find((x) => x.token_address.toLowerCase() === item.token_address.toLowerCase());
+        return exists ? h : [item, ...h].slice(0, 20);
+      });
+
+      onPick?.(item); // allow caller-specific behavior
+      onClose(); // close modal
+      // use encodeURIComponent in case an address-like value ever includes unusual chars
+      router.push(`/token/${encodeURIComponent(item.token_address)}`);
+    },
+    [onPick, onClose, router]
+  );
 
   // load history once
   useEffect(() => {
@@ -185,7 +204,7 @@ export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery
     abortRef.current = ctrl;
     setIsLoading(true);
 
-    searchTokens(dq, { chainId: 2741, resolution: '1h', index: 0, limit: 50, signal: ctrl.signal })
+    searchTokens(dq, { chainId: 2741, resolution: '1d', index: 0, limit: 50, signal: ctrl.signal })
       .then((res) => {
         // commit only if still latest AND still not history
         if (mySeq !== seqRef.current || dqRef.current.length === 0) return;
@@ -299,13 +318,15 @@ export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery
               <div className="py-6 text-xl text-white/50">No recent searches.</div>
             ) : (
               history.map((it, idx) => (
-                <ResultRow key={it.id} item={it} active={idx === active} onClick={() => pick(it)} />
+                <ResultRow key={it.id} item={it} active={idx === active} onClick={() => goToken(it)} />
               ))
             )
           ) : items.length === 0 ? (
             <div className="py-6 text-xl text-white/50">{isLoading ? 'Searching…' : 'No matches.'}</div>
           ) : (
-            items.map((it, idx) => <ResultRow key={it.id} item={it} active={idx === active} onClick={() => pick(it)} />)
+            items.map((it, idx) => (
+              <ResultRow key={it.id} item={it} active={idx === active} onClick={() => goToken(it)} />
+            ))
           )}
         </div>
       </div>
