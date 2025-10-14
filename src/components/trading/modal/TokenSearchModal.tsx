@@ -153,7 +153,7 @@ export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery
       onPick?.(item); // allow caller-specific behavior
       onClose(); // close modal
       // use encodeURIComponent in case an address-like value ever includes unusual chars
-      router.push(`/token/${encodeURIComponent(item.token_address)}`);
+      router.push(`/token/${encodeURIComponent(item.pair_address)}`);
     },
     [onPick, onClose, router]
   );

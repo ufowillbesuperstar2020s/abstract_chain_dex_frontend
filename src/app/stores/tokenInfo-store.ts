@@ -4,9 +4,8 @@ import { create } from 'zustand';
 import axios, { AxiosResponse } from 'axios';
 import { StatusCodes } from 'http-status-codes';
 import type { TokenMetadata } from '@/types/api';
-import { DEFAULT_TOKEN_ADDRESS } from '@/utils/constants';
 
-const TOKEN_ADDRESS = DEFAULT_TOKEN_ADDRESS;
+const TOKEN_ADDRESS = '0x85Ca16Fd0e81659e0b8Be337294149E722528731'; //'wang_tmp_TOKEN_ADDRESS'
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
 type TokenInfoState = {

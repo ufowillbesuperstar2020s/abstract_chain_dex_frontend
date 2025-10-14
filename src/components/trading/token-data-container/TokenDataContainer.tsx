@@ -7,6 +7,7 @@ import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
 import { IntervalDropdownUI } from '@/components/trading/token-data-container/IntervalDropdownUI';
 import type { Interval } from '@/components/trading/token-data-container/IntervalDropdownUI';
+import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 
 /** compact number like 10.9K, 1.2M */
 function compact(n: number | null, opts: Intl.NumberFormatOptions = {}): string {
@@ -44,7 +45,7 @@ export default function TokenDataContainer({ interval, onIntervalChange }: Props
   // new metrics store
   const { metrics, isLoading: metricsLoading, quote, setPairAddress, fetchMetrics } = useTokenMetricsStore();
 
-  const pairAddress = '0x299270c5d97c23b2a5d4c8e045ef8682197b8fc0'; // wang_tmp_pair_address
+  const pairAddress = DEFAULT_PAIR_ADDRESS;
 
   // keep metrics store in sync with current token/pair
   useEffect(() => {

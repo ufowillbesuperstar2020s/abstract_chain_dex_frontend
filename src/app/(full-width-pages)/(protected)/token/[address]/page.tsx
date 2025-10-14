@@ -11,6 +11,7 @@ import TransactionTable from '@/components/trading/TransactionTable';
 import ResizableSection from '@/components/layout/ResizableSection';
 import BuySellCard from '@/components/trading/buy-sell-card';
 import type { Interval } from '@/components/trading/token-data-container/IntervalDropdownUI';
+import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 
 const defaultWidgetProps: Partial<ChartingLibraryWidgetOptions> = {
   symbol: 'NOOT',
@@ -33,7 +34,7 @@ const TVChartContainer = dynamic(
 export default function Home() {
   const [tvReady, setTvReady] = useState(false);
 
-  const pairAddress = '0x299270c5d97c23b2a5d4c8e045ef8682197b8fc0'; // wang_tmp_pair_address
+  const pairAddress = DEFAULT_PAIR_ADDRESS;
   const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? 'http://160.202.131.23:8081';
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://160.202.131.23:8082';
 

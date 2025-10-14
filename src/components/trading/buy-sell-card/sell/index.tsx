@@ -7,7 +7,7 @@ import axios, { AxiosResponse } from 'axios';
 import { useAccount, useSendTransaction, useSendCalls, usePublicClient } from 'wagmi';
 import { useAbstractClient } from '@abstract-foundation/agw-react';
 import { parseUnits, encodeFunctionData } from 'viem';
-import { DEFAULT_TOKEN_ADDRESS } from '@/utils/constants';
+import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 
 const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/evm-chart-api/';
@@ -88,7 +88,7 @@ export default function Sell() {
           // Quote swap leg from backend (amount_in in base units)
           const payload: AbstractSwapRequest = {
             wallet_address: address,
-            token_address: DEFAULT_TOKEN_ADDRESS,
+            token_address: DEFAULT_PAIR_ADDRESS,
             amount_in: amountInAtomic.toString(),
             is_sell: true,
             slippage
@@ -114,7 +114,7 @@ export default function Sell() {
 
           if (canBatch) {
             const calls: Array<{ to: `0x${string}`; data: `0x${string}`; value?: bigint }> = [
-              { to: DEFAULT_TOKEN_ADDRESS as `0x${string}`, data: approveData as `0x${string}` },
+              { to: DEFAULT_PAIR_ADDRESS as `0x${string}`, data: approveData as `0x${string}` },
               {
                 to: swap_tx.to,
                 data: swap_tx.input,
@@ -131,7 +131,7 @@ export default function Sell() {
 
           // ---- Fallback: two normal txs (approve -> swap) ----
           const approveReceipt = await sendTransactionAsync({
-            to: DEFAULT_TOKEN_ADDRESS as `0x${string}`,
+            to: DEFAULT_PAIR_ADDRESS as `0x${string}`,
             data: approveData as `0x${string}`,
             value: BigInt(0)
           });

@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import axios, { AxiosResponse } from 'axios';
 import { StatusCodes } from 'http-status-codes';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
-import { DEFAULT_TOKEN_ADDRESS } from '@/utils/constants';
+import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
@@ -95,7 +95,7 @@ const bigBaseUnitsToNumber = (raw: string | null | undefined, decimals: number):
 };
 
 export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
-  pairAddress: DEFAULT_TOKEN_ADDRESS,
+  pairAddress: DEFAULT_PAIR_ADDRESS,
   quote: 'WETH',
   metrics: null,
   isLoading: false,

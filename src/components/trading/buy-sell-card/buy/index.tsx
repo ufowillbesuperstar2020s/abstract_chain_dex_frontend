@@ -4,7 +4,7 @@ import TradeInterface from '../shared/TradeInterface';
 import type { AbstractSwapResult } from '@/types/api';
 import axios, { AxiosResponse } from 'axios';
 import { useAccount, useSendTransaction } from 'wagmi';
-import { DEFAULT_TOKEN_ADDRESS } from '@/utils/constants';
+import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 import { parseEther } from 'viem';
 import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
 
@@ -39,7 +39,7 @@ export default function Buy() {
 
         const payload: AbstractSwapRequest = {
           wallet_address: address,
-          token_address: DEFAULT_TOKEN_ADDRESS,
+          token_address: DEFAULT_PAIR_ADDRESS,
           amount_in: amountIn,
           is_sell: false,
           slippage: slippage

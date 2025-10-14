@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useAccount } from 'wagmi';
-import { DEFAULT_TOKEN_ROUTE } from '@/utils/constants';
+import { DEFAULT_PAIR_ROUTE } from '@/utils/constants';
 
 function sanitizeNext(input: string | null | undefined): string | null {
   if (!input) return null;
@@ -35,7 +35,7 @@ export default function FullWidthPageLayout({ children }: { children: React.Reac
 
   const targetAfterAuth = useMemo(() => {
     const rawNext = searchParams?.get('next') || undefined;
-    return sanitizeNext(rawNext) || DEFAULT_TOKEN_ROUTE;
+    return sanitizeNext(rawNext) || DEFAULT_PAIR_ROUTE;
   }, [searchParams]);
 
   useEffect(() => {

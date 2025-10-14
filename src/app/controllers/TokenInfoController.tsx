@@ -3,9 +3,9 @@
 import { useEffect } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
-import { DEFAULT_TOKEN_ADDRESS } from '@/utils/constants';
+import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 
-const FALLBACK = DEFAULT_TOKEN_ADDRESS;
+const FALLBACK = DEFAULT_PAIR_ADDRESS;
 
 function getAddressFromRoute(pathname: string | null, params: Record<string, unknown> | null) {
   const p = params ?? {};
@@ -27,7 +27,7 @@ export default function TokenInfoController() {
   const fetchTokenMetadata = useTokenInfoStore((s) => s.fetchTokenMetadata);
 
   useEffect(() => {
-    const nextAddr = getAddressFromRoute(pathname, params);
+    const nextAddr = '0x85Ca16Fd0e81659e0b8Be337294149E722528731'; //'wang_tmp_tokenAddress'
     if (nextAddr !== tokenAddress) {
       setTokenAddress(nextAddr);
       fetchTokenMetadata(nextAddr);
