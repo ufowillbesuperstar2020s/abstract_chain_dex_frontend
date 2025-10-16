@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
+import { getTokenAddress } from '@/utils/getTokenAddress';
 
 const FALLBACK = DEFAULT_PAIR_ADDRESS;
 
@@ -22,18 +23,49 @@ export default function TokenInfoController() {
   const pathname = usePathname();
   const params = useParams();
 
+  const pairAddress = getAddressFromRoute(pathname, params);
+
   const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
   const setTokenAddress = useTokenInfoStore((s) => s.setTokenAddress);
   const fetchTokenMetadata = useTokenInfoStore((s) => s.fetchTokenMetadata);
 
   useEffect(() => {
-    const nextAddr = '0x85Ca16Fd0e81659e0b8Be337294149E722528731'; //'wang_tmp_tokenAddress'
-    if (nextAddr !== tokenAddress) {
-      setTokenAddress(nextAddr);
-      fetchTokenMetadata(nextAddr);
-    } else if (!useTokenInfoStore.getState().tokenMetadata) {
-      fetchTokenMetadata(nextAddr);
+    let cancelled = false;
+
+    async function resolveAndLoad() {
+      const url = `/api/search?q=${encodeURIComponent(pairAddress)}&chain_id=2741&resolution=1d&index=0&limit=10`;
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        if (!r.ok) throw new Error(`search upstream error ${r.status}`);
+        const json = await r.json();
+        const pairs = json?.data?.pairs ?? json?.pairs ?? [];
+        if (!pairs?.length) {
+          // nothing came back — optionally keep last tokenAddress
+          return;
+        }
+
+        const p = pairs[0];
+        const nextAddr = getTokenAddress({
+          token0_address: p.token0_address,
+          token1_address: p.token1_address,
+          chain_id: p.chain_id
+        });
+
+        if (!nextAddr) return;
+
+        if (!cancelled && nextAddr !== tokenAddress) {
+          setTokenAddress(nextAddr);
+          fetchTokenMetadata(nextAddr);
+        } else if (!useTokenInfoStore.getState().tokenMetadata) {
+          fetchTokenMetadata(nextAddr);
+        }
+      } catch (err) {}
     }
+
+    resolveAndLoad();
+    return () => {
+      cancelled = true;
+    };
   }, [pathname, params, tokenAddress, setTokenAddress, fetchTokenMetadata]);
 
   return null; // no UI, just side-effect controller

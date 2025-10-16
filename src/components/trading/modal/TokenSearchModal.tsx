@@ -90,7 +90,7 @@ async function searchTokens(
   const res = await fetch(
     `/api/search?q=${encodeURIComponent(q)}&chain_id=${chainId}&resolution=${encodeURIComponent(
       resolution
-    )}&index=${index}&limit=${limit}`,
+    )}&index=${index}&limit=${limit}&order_by=liquidity desc`,
     { cache: 'no-store', signal: opts?.signal }
   );
   if (!res.ok) throw new Error(`Search failed: ${res.status}`);

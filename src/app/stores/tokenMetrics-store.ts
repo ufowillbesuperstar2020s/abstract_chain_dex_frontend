@@ -109,6 +109,8 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
 
     set({ isLoading: true });
 
+    console.log('wang_addr', addr);
+
     try {
       const url = `${API_BASE}/api/info/market/${addr}`;
       const res: AxiosResponse<MarketApiResponse> = await axios.get(url);
