@@ -1,7 +1,7 @@
 'use client';
 
 import styles from './index.module.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import {
   ChartingLibraryWidgetOptions,
   LanguageCode,
@@ -11,6 +11,7 @@ import {
   IExternalDatafeed,
   IDatafeedQuotesApi
 } from '@public/tv_charting_library/charting_library/charting_library';
+import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
 
 function toTV(res: string): string {
   const m: Record<string, string> = {
@@ -27,24 +28,27 @@ function toTV(res: string): string {
   return m[res] ?? '1D';
 }
 
-/** Minimal widget methods we use from TradingView */
 type TVWidget = {
   onChartReady(cb: () => void): void;
   headerReady(): Promise<void>;
   createButton(): HTMLElement;
   remove(): void;
+  activeChart(): {
+    symbol(): string;
+    resolution(): ResolutionString;
+    setSymbol(symbol: string, interval: ResolutionString, cb?: () => void): void;
+  };
 };
 
-/** TradingView datafeed types that the widget accepts */
 type TVDatafeed = IBasicDataFeed | (IDatafeedChartApi & IExternalDatafeed & IDatafeedQuotesApi);
-
-/** Minimal shapes on window we rely on */
 type WindowWithTV = Window & {
-  TradingView?: {
-    widget: new (opts: ChartingLibraryWidgetOptions) => TVWidget;
-  };
-  // ✅ Make constructor return TVDatafeed (not unknown)
-  CustomDatafeed?: new (opts: { apiBase?: string; wsUrl?: string; pairAddress?: string }) => TVDatafeed;
+  TradingView?: { widget: new (opts: ChartingLibraryWidgetOptions) => TVWidget };
+  CustomDatafeed?: new (opts: {
+    apiBase?: string;
+    wsUrl?: string;
+    pairAddress?: string;
+    totalSupply?: number;
+  }) => TVDatafeed;
 };
 
 export const TVChartContainer = (
@@ -57,25 +61,34 @@ export const TVChartContainer = (
 ) => {
   const chartContainerRef = useRef<HTMLDivElement>(null) as React.MutableRefObject<HTMLInputElement>;
 
+  // read total supply from store
+  const { metrics } = useTokenMetricsStore();
+
+  // tokens (already divided by 10**decimals in the store)
+  const totalSupply = useMemo(() => Number(metrics?.supplyHuman ?? 0), [metrics?.supplyHuman]);
+
   useEffect(() => {
     const w = window as unknown as WindowWithTV;
-    if (!w.TradingView || !w.TradingView.widget) {
-      console.warn('TradingView library not loaded yet.');
-      return; // wait until page sets isScriptReady
-    }
-    if (!w.CustomDatafeed) {
-      console.warn('CustomDatafeed not available yet.');
-      return;
-    }
+    if (!w.TradingView?.widget || !w.CustomDatafeed) return;
+
     const tvResolution = toTV((props.externalResolution ?? props.interval) || '1d');
+
     const datafeed: TVDatafeed = new w.CustomDatafeed({
       apiBase: props.apiBase,
       wsUrl: props.wsUrl,
-      pairAddress: props.pairAddress
+      pairAddress: props.pairAddress,
+      totalSupply // ✅ pass once
     });
 
+    // keep datafeed in sync if supply changes later
+    window.dispatchEvent(new CustomEvent('tv:updateTotalSupply', { detail: totalSupply }));
+
+    const base = (props.symbol as string) || (props.pairAddress as string) || 'UNKNOWN';
+    let unit: 'USD' | 'WETH' = 'USD';
+    let mode: 'PRICE' | 'MCAP' = 'PRICE';
+
     const widgetOptions: ChartingLibraryWidgetOptions = {
-      symbol: props.symbol,
+      symbol: `${base}@${unit}#${mode}`, // ✅ full key
       datafeed,
       interval: tvResolution as ResolutionString,
       container: chartContainerRef.current,
@@ -102,11 +115,10 @@ export const TVChartContainer = (
       theme: props.theme,
       custom_css_url: '/tv_charting_library/custom.css'
     };
-    const tvWidget = new w.TradingView.widget(widgetOptions);
+    const tv = new w.TradingView.widget(widgetOptions);
 
-    // Units and Metrics
-    tvWidget.onChartReady(() => {
-      tvWidget.headerReady().then(() => {
+    tv.onChartReady(() => {
+      tv.headerReady().then(() => {
         const makeToggle = (opts: {
           labels: [string, string];
           title: string;
@@ -114,70 +126,60 @@ export const TVChartContainer = (
           onChange?: (activeIndex: 0 | 1) => void;
         }) => {
           const { labels, title, onChange, initialActive = 0 } = opts;
-
-          const root = tvWidget.createButton() as HTMLElement;
+          const root = tv.createButton() as HTMLElement;
           root.classList.add('tvseg');
           root.setAttribute('title', title);
-
-          // Build two clickable pills with a slash between
           root.innerHTML = `
             <div class="tvseg-wrap">
-              <button class="tvseg-btn is-active" data-index="0" type="button">${labels[0]}</button>
+              <button class="tvseg-btn ${initialActive === 0 ? 'is-active' : 'is-inactive'}" data-index="0" type="button">${labels[0]}</button>
               <span class="tvseg-sep">/</span>
-              <button class="tvseg-btn is-inactive" data-index="1" type="button">${labels[1]}</button>
-            </div>
-          `;
-
+              <button class="tvseg-btn ${initialActive === 1 ? 'is-active' : 'is-inactive'}" data-index="1" type="button">${labels[1]}</button>
+            </div>`;
           const btns = Array.from(root.querySelectorAll<HTMLButtonElement>('.tvseg-btn'));
-          const setActive = (idx: 0 | 1) => {
+          const setActive = (idx: 0 | 1) =>
             btns.forEach((b, i) => {
               b.classList.toggle('is-active', i === idx);
               b.classList.toggle('is-inactive', i !== idx);
             });
-          };
-
-          // default visual state
-          setActive(initialActive);
-
-          // click handling (UI only)
-          btns.forEach((b) => {
+          btns.forEach((b) =>
             b.addEventListener('click', () => {
               const idx = (Number(b.dataset.index) as 0 | 1) || 0;
               setActive(idx);
               onChange?.(idx);
-            });
-          });
-
+            })
+          );
           return { root, setActive };
         };
 
-        // USD / WETH toggle (default to USD active)
+        // USD / WETH
         makeToggle({
           labels: ['USD', 'WETH'],
           title: 'Toggle USD/WETH',
           initialActive: 0,
-          onChange: () => {
-            // wang_later: setSymbol(...) or emit an event
+          onChange: (i) => {
+            unit = i === 0 ? 'USD' : 'WETH';
+            const chart = tv.activeChart();
+            const interval = chart.resolution();
+            chart.setSymbol(`${base}@${unit}#${mode}`, interval as ResolutionString);
           }
         });
 
-        // MarketCap / Price toggle
+        // MarketCap / Price
         makeToggle({
           labels: ['MarketCap', 'Price'],
           title: 'Toggle MarketCap/Price',
-          initialActive: 1,
-          onChange: () => {
-            // wang_later: setSymbol(...) or emit an event
+          initialActive: 1, // default Price
+          onChange: (i) => {
+            mode = i === 0 ? 'MCAP' : 'PRICE';
+            const chart = tv.activeChart();
+            const interval = chart.resolution();
+            chart.setSymbol(`${base}@${unit}#${mode}`, interval as ResolutionString);
           }
         });
       });
     });
 
-    return () => {
-      if (tvWidget) {
-        tvWidget.remove();
-      }
-    };
+    return () => tv.remove();
   }, [
     props.symbol,
     props.interval,
@@ -185,7 +187,8 @@ export const TVChartContainer = (
     props.pairAddress,
     props.apiBase,
     props.wsUrl,
-    props.library_path
+    props.library_path,
+    totalSupply // ✅ re-run to push new supply and event
   ]);
 
   return <div ref={chartContainerRef} className={styles.TVChartContainer} />;

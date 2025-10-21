@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import AmountInput from './AmountInput';
-import type { TradeType, TabItem, PresetTabItem } from './types';
-import { TABS, PRESET_TABS } from './types';
+import type { TradeType, TabItem } from './types';
+import { TABS } from './types';
 import Image from 'next/image';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import TradeExeSettingModal from '@/components/trading/modal/TradeExeSettingModal';
@@ -15,18 +15,10 @@ export default function TradeInterface({
   onSubmit
 }: {
   tradeType: TradeType;
-  onSubmit: (payload: {
-    tradeType: TradeType;
-    tab: TabItem;
-    presetTab: PresetTabItem;
-    amount: number;
-    price?: number;
-  }) => void;
+  onSubmit: (payload: { tradeType: TradeType; tab: TabItem; amount: number; price?: number }) => void;
 }) {
   const [tab, setTab] = useState<TabItem>('Market');
   const [amount, setAmount] = useState('');
-
-  const [presetTab, setPresetTab] = useState<PresetTabItem>('Preset1');
 
   const parsedAmount = useMemo(() => Number(amount || '0'), [amount]);
   const accentBg =
@@ -130,7 +122,6 @@ export default function TradeInterface({
           onSubmit({
             tradeType,
             tab,
-            presetTab,
             amount: parsedAmount
           })
         }
@@ -166,31 +157,6 @@ export default function TradeInterface({
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Preset Tabs */}
-      <div className="mt-4 flex items-center justify-around text-sm">
-        {PRESET_TABS.map((t) => {
-          const active = presetTab === t;
-          return (
-            <button
-              key={t}
-              onClick={() => setPresetTab(t)}
-              className={[
-                'relative px-5 pb-1 transition-colors',
-                active ? 'text-white' : 'text-white/60 hover:text-white'
-              ].join(' ')}
-            >
-              {t}
-              <span
-                className={[
-                  'absolute -bottom-[2px] left-0 h-[2px] w-full rounded-full',
-                  active ? 'bg-emerald-400' : 'bg-transparent'
-                ].join(' ')}
-              />
-            </button>
-          );
-        })}
       </div>
 
       {/* Token Info */}

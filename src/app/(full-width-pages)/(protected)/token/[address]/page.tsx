@@ -5,7 +5,6 @@ import { useState } from 'react';
 import Script from 'next/script';
 import { ChartingLibraryWidgetOptions } from '@public/tv_charting_library/charting_library/charting_library';
 import '@public/tv_charting_library/datafeed.js';
-import TradingHeader from '@/components/trading/trading-header';
 import TokenDataContainer from '@/components/trading/token-data-container/TokenDataContainer';
 import TransactionTable from '@/components/trading/TransactionTable';
 import ResizableSection from '@/components/layout/ResizableSection';
@@ -58,12 +57,6 @@ export default function Home() {
         <Script src="/tv_charting_library/datafeeds/udf/dist/bundle.js" strategy="afterInteractive" />
         <Script src="/tv_charting_library/streaming.js" strategy="afterInteractive" />
 
-        {/* row 1: header */}
-        <div className="col-span-12 row-[1]">
-          <TradingHeader />
-        </div>
-
-        {/* row 2: content */}
         <div className="col-span-12 row-[2] ml-12 flex min-h-0 flex-col xl:col-span-9">
           {/* token strip */}
           <div className="flex-none">
