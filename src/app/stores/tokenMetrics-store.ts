@@ -52,10 +52,46 @@ export type TokenMetrics = {
 
 export type VolumeWindow = '1m' | '5m' | '15m' | '1h' | '4h' | '12h' | '24h';
 
+type Volumes = {
+  buys: { count: number; usd: number };
+  sells: { count: number; usd: number };
+};
+
+const DEFAULT_VOLUMES: Volumes = {
+  buys: { count: 0, usd: 0 },
+  sells: { count: 0, usd: 0 }
+};
+
+function computeVolumes(metrics: TokenMetricsState['metrics'] | null, decimals: number): Volumes {
+  if (!metrics) return DEFAULT_VOLUMES;
+
+  const buyCount = metrics.buyCount ?? 0;
+  const sellCount = metrics.sellCount ?? 0;
+  const buyVolTokens = bigBaseUnitsToNumber(metrics.buyVolumeRaw ?? '0', decimals);
+  const sellVolTokens = bigBaseUnitsToNumber(metrics.sellVolumeRaw ?? '0', decimals);
+  const tokenUsd = metrics.usdPrice ?? 0;
+
+  return {
+    buys: { count: buyCount, usd: buyVolTokens * tokenUsd },
+    sells: { count: sellCount, usd: sellVolTokens * tokenUsd }
+  };
+}
+
 type TokenMetricsState = {
   pairAddress: string;
   quote: Quote;
-  metrics: TokenMetrics | null;
+  metrics: {
+    usdPrice: number | null;
+    liquidityUsd: number | null;
+    supplyHuman: number | null;
+    buyCount: number | null;
+    sellCount: number | null;
+    buyVolumeRaw: string | null;
+    sellVolumeRaw: string | null;
+    trade: any | null;
+  } | null;
+  volumes: Volumes;
+
   isLoading: boolean;
 
   setPairAddress: (addr: string) => void;
@@ -63,12 +99,6 @@ type TokenMetricsState = {
 
   fetchMetrics: (pairAddress?: string) => Promise<void>;
   refresh: () => Promise<void>;
-
-  // Derived view for your VolumeStats
-  getVolumes: () => {
-    buys: { count: number; usd: number };
-    sells: { count: number; usd: number };
-  };
 };
 
 const toNum = (v: unknown): number | null => {
@@ -99,6 +129,7 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
   quote: 'WETH',
   metrics: null,
   isLoading: false,
+  volumes: DEFAULT_VOLUMES,
 
   setPairAddress: (addr) => set({ pairAddress: addr }),
   setQuote: (q) => set({ quote: q }),
@@ -127,43 +158,33 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
       const decimals = useTokenInfoStore.getState().tokenMetadata?.decimals ?? 0;
       const totalSupplyRaw = t.total_supply ?? null;
 
-      // --- compute token USD price ---
       let usdPrice: number | null = null;
-      if (priceRaw != null) {
-        // If quote is USD, 'price' is already USD per token.
-        // If quote is WETH, 'price' is tokens per WETH, so tokenUSD = (1/price)*weth_usd_price
-        if (get().quote === 'USD') {
-          usdPrice = priceRaw;
-        } else {
-          usdPrice = wethUsd != null ? wethUsd / priceRaw : null;
-        }
-      }
+
+      usdPrice = priceRaw;
 
       let supplyHuman: number | null = null;
       if (totalSupplyRaw != null) {
         const asNum = Number(totalSupplyRaw);
-        if (Number.isFinite(asNum)) {
-          supplyHuman = asNum / Math.pow(10, decimals);
-        } else {
-          supplyHuman = Number(parseFloat(String(totalSupplyRaw))) / Math.pow(10, decimals);
-        }
+        supplyHuman =
+          (Number.isFinite(asNum) ? asNum : Number(parseFloat(String(totalSupplyRaw)))) / Math.pow(10, decimals);
       }
 
-      set({
-        metrics: {
-          usdPrice,
-          liquidityUsd,
-          supplyHuman,
-          buyCount: t.buy_count ?? null,
-          sellCount: t.sell_count ?? null,
-          buyVolumeRaw: t.buy_volume ?? null,
-          sellVolumeRaw: t.sell_volume ?? null,
-          trade
-        }
-      });
+      const metrics = {
+        usdPrice,
+        liquidityUsd,
+        supplyHuman,
+        buyCount: t.buy_count ?? null,
+        sellCount: t.sell_count ?? null,
+        buyVolumeRaw: t.buy_volume ?? null,
+        sellVolumeRaw: t.sell_volume ?? null,
+        trade
+      };
+
+      const volumes = computeVolumes(metrics, decimals);
+      set({ metrics, volumes });
     } catch (e) {
       console.error('Error fetching token metrics:', e);
-      set({ metrics: null });
+      set({ metrics: null, volumes: DEFAULT_VOLUMES });
     } finally {
       set({ isLoading: false });
     }
@@ -171,26 +192,5 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
 
   refresh: async () => {
     await get().fetchMetrics();
-  },
-
-  // ---- Derived volumes/counts for your bar ----
-  getVolumes: () => {
-    const m = get().metrics;
-    const decimals = useTokenInfoStore.getState().tokenMetadata?.decimals ?? 0;
-
-    // counts: API only gives all-time counts; use them for now
-    const buyCount = m?.buyCount ?? 0;
-    const sellCount = m?.sellCount ?? 0;
-
-    const buyVolTokens = bigBaseUnitsToNumber(m?.buyVolumeRaw ?? '0', decimals);
-
-    const sellVolTokens = bigBaseUnitsToNumber(m?.sellVolumeRaw ?? '0', decimals);
-
-    const tokenUsd = m?.usdPrice ?? 0;
-
-    return {
-      buys: { count: buyCount, usd: buyVolTokens * tokenUsd },
-      sells: { count: sellCount, usd: sellVolTokens * tokenUsd }
-    };
   }
 }));
