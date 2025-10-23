@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { pickBasePerPair, DEFAULT_QUOTE_SYMBOLS } from '@/utils/pickBasePerPair';
 import Toast from '@/components/ui/Toast';
@@ -101,7 +101,6 @@ const RESOLUTION_FOR: Record<TimeRange | 'All', '1h' | '4h' | '12h' | '24h'> = {
 };
 
 export default function ExplorePage() {
-  const router = useRouter();
   const sp = useSearchParams();
 
   // URL state
@@ -179,8 +178,8 @@ export default function ExplorePage() {
       setTotal(json?.total ?? 0);
       const mapped = baseOnly.map(mapPair);
       setRows(mapped);
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to load');
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to load');
       setRows([]);
     } finally {
       setLoading(false);
@@ -224,19 +223,14 @@ export default function ExplorePage() {
     });
   }, [rows, query, showFavorites, onlyNew, favorites, sort]);
 
-  const changeKey: SortKey =
-    timeRange === '1h'
-      ? 'change1hPct'
-      : timeRange === '12h'
-        ? 'change12hPct'
-        : timeRange === '24h'
-          ? 'change24hPct'
-          : 'change12hPct';
-
   const toggleFav = (addr: string) =>
     setFavorites((prev) => {
       const next = new Set(prev);
-      next.has(addr) ? next.delete(addr) : next.add(addr);
+      if (next.has(addr)) {
+        next.delete(addr);
+      } else {
+        next.add(addr);
+      }
       return next;
     });
 
@@ -268,6 +262,10 @@ export default function ExplorePage() {
     </button>
   );
 
+  const TIME_OPTIONS = ['All', '1h', '4h', '12h', '24h'] as const;
+  type TimeOption = (typeof TIME_OPTIONS)[number];
+  const normalize = (r: TimeOption): TimeRange => (r === 'All' ? '12h' : r);
+
   return (
     <div className="mx-auto w-full px-10 py-3">
       {/* Header */}
@@ -277,15 +275,13 @@ export default function ExplorePage() {
 
           {/* Range tabs */}
           <div className="ml-2 flex items-center gap-1 rounded-xl bg-white/10 p-0.5">
-            {(['All', '1h', '4h', '12h', '24h'] as any[]).map((r: 'All' | TimeRange) => (
+            {TIME_OPTIONS.map((r) => (
               <button
                 key={r}
-                onClick={() => setTimeRange((r === 'All' ? '12h' : r) as TimeRange)}
+                onClick={() => setTimeRange(normalize(r))}
                 className={cx(
                   'h-6 rounded-md px-4 text-sm',
-                  (r === 'All' ? '12h' : r) === timeRange
-                    ? 'bg-emerald-700 text-white'
-                    : 'text-white/70 hover:text-white'
+                  normalize(r) === timeRange ? 'bg-emerald-700 text-white' : 'text-white/70 hover:text-white'
                 )}
               >
                 {r}
@@ -539,8 +535,7 @@ export default function ExplorePage() {
 function Th({
   label,
   onClick,
-  active,
-  dir
+  active
 }: {
   label: string;
   onClick?: () => void;

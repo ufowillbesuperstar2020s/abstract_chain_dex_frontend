@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
@@ -28,6 +28,7 @@ export default function TokenInfoController() {
   const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
   const setTokenAddress = useTokenInfoStore((s) => s.setTokenAddress);
   const fetchTokenMetadata = useTokenInfoStore((s) => s.fetchTokenMetadata);
+  const setError = useState<string | null>(null)[1];
 
   useEffect(() => {
     let cancelled = false;
@@ -59,7 +60,9 @@ export default function TokenInfoController() {
         } else if (!useTokenInfoStore.getState().tokenMetadata) {
           fetchTokenMetadata(nextAddr);
         }
-      } catch (err) {}
+      } catch (error) {
+        setError((error as Error)?.message ?? 'Failed to load');
+      }
     }
 
     resolveAndLoad();

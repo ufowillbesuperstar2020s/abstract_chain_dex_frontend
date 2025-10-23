@@ -88,7 +88,7 @@ type TokenMetricsState = {
     sellCount: number | null;
     buyVolumeRaw: string | null;
     sellVolumeRaw: string | null;
-    trade: any | null;
+    trade: Partial<Record<TradeWindowKey, TradeWindow>> | null;
   } | null;
   volumes: Volumes;
 
@@ -152,7 +152,6 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
       const trade = res.data?.trade ?? null;
 
       const priceRaw = toNum(t.price);
-      const wethUsd = toNum(t.weth_usd_price);
       const liquidityUsd = toNum(t.liquidity);
 
       const decimals = useTokenInfoStore.getState().tokenMetadata?.decimals ?? 0;

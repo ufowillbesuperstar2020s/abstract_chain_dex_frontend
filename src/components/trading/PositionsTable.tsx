@@ -7,7 +7,7 @@ import cx from 'clsx';
 
 import { useAuthStore } from '@/app/stores/auth-store';
 import { usePositionsStore, type ApiPosition } from '@/app/stores/positions-store';
-import { shortAddress } from '@/utils/shortAddress';
+// import { shortAddress } from '@/utils/shortAddress';
 
 /** Optional props:
  * - tokenAddress: if provided, we only show the position for this token.
@@ -20,21 +20,21 @@ type Props = {
 };
 
 /** ------- local format helpers (kept self-contained) ------- */
-function fmtUSD(n?: number) {
-  const v = Number(n ?? 0);
-  const sign = v < 0 ? '-' : '';
-  const abs = Math.abs(v);
-  return `${sign}$${abs.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-function fmtUSDRaw(n?: number) {
-  const v = Math.abs(Number(n ?? 0));
-  return `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-function fmtNumber(n?: number, maxFraction = 4) {
-  const v = Number(n ?? 0);
-  if (!Number.isFinite(v)) return '0';
-  return v.toLocaleString(undefined, { maximumFractionDigits: maxFraction });
-}
+// function fmtUSD(n?: number) {
+//   const v = Number(n ?? 0);
+//   const sign = v < 0 ? '-' : '';
+//   const abs = Math.abs(v);
+//   return `${sign}$${abs.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// }
+// function fmtUSDRaw(n?: number) {
+//   const v = Math.abs(Number(n ?? 0));
+//   return `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// }
+// function fmtNumber(n?: number, maxFraction = 4) {
+//   const v = Number(n ?? 0);
+//   if (!Number.isFinite(v)) return '0';
+//   return v.toLocaleString(undefined, { maximumFractionDigits: maxFraction });
+// }
 
 /** Convert a raw string (likely wei) to a human number assuming 18 decimals by default. */
 function humanFromRaw(raw: string, decimals = 18): number {
@@ -66,7 +66,7 @@ function Th(props: React.HTMLAttributes<HTMLTableCellElement>) {
 }
 
 export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
-  const connected = useAuthStore((s) => s.isConnected);
+  // const connected = useAuthStore((s) => s.isConnected);
   const connectedAddr = useAuthStore((s) => s.address ?? undefined);
   const wallet = walletAddress ?? connectedAddr;
 
@@ -99,31 +99,29 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
 
   // Map API rows to display rows, computing PnL
   const rows = React.useMemo(() => {
-    return (
-      data
-        .map((p) => {
-          const cost = toNum(p.cost); // USD
-          const currentValue = toNum(p.current_value); // USD
-          const pnlAbs = currentValue - cost;
-          const pnlPct = cost > 0 ? pnlAbs / cost : 0;
+    const list = (data ?? [])
+      .map((p) => {
+        const cost = toNum(p.cost); // USD
+        const currentValue = toNum(p.current_value); // USD
+        const pnlAbs = currentValue - cost;
+        const pnlPct = cost > 0 ? pnlAbs / cost : 0;
 
-          const balance = humanFromRaw(p.balance, 18);
+        const balance = humanFromRaw(p.balance, 18);
+        const entryPerToken = toNum(p.entry_price) * Math.pow(10, 18);
 
-          const entryPerToken = toNum(p.entry_price) * Math.pow(10, 18);
+        return {
+          tokenAddress: p.token_address,
+          balance,
+          costBasis: cost,
+          currentValue,
+          entryPrice: entryPerToken,
+          pnlAbs,
+          pnlPct
+        };
+      })
+      .sort((a, b) => b.currentValue - a.currentValue);
 
-          return {
-            tokenAddress: p.token_address,
-            balance,
-            costBasis: cost,
-            currentValue,
-            entryPrice: entryPerToken,
-            pnlAbs,
-            pnlPct
-          };
-        })
-        // sort by largest current value
-        .sort((a, b) => b.currentValue - a.currentValue)
-    );
+    return list;
   }, [data]);
 
   if (loading) {

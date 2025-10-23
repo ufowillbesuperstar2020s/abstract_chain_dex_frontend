@@ -57,11 +57,12 @@ export const usePositionsStore = create<State>((set, get) => ({
         positionsByWallet: { ...s.positionsByWallet, [wallet]: res.data },
         loadingByWallet: { ...s.loadingByWallet, [wallet]: false }
       }));
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('fetchPositions error', e);
+      const message = e instanceof Error ? e.message : 'Failed to load positions';
       set((s) => ({
         loadingByWallet: { ...s.loadingByWallet, [wallet]: false },
-        errorByWallet: { ...s.errorByWallet, [wallet]: e?.message ?? 'Failed to load positions' }
+        errorByWallet: { ...s.errorByWallet, [wallet]: message }
       }));
     }
   }
