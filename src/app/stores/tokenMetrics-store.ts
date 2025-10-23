@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
 type Quote = 'USD' | 'WETH';
 

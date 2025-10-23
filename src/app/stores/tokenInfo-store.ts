@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import type { TokenMetadata } from '@/types/api';
 
 const TOKEN_ADDRESS = '0x85Ca16Fd0e81659e0b8Be337294149E722528731'; //'wang_tmp_TOKEN_ADDRESS'
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
 type TokenInfoState = {
   tokenAddress: string;

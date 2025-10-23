@@ -11,6 +11,8 @@ import { formatAgeShort } from '@/utils/formatAge';
 import { shortAddress } from '@/utils/shortAddress';
 import FixedFooter from '@/components/explore/FixedFooter';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
+
 // ---------- types from UI ----------
 type TimeRange = '1h' | '4h' | '12h' | '24h';
 
@@ -175,7 +177,7 @@ function ExplorePageInner() {
       const resolution = RESOLUTION_FOR[timeRange === '4h' ? '4h' : timeRange] ?? '12h';
 
       // If you hit CORS, switch this to `/api/pairs?...` and add the proxy below.
-      const url = `http://160.202.131.23:8081/api/info/pair/list?chain_id=2741&resolution=${resolution}&index=${index}&limit=${limit}&order_by=liquidity desc`;
+      const url = `${API_BASE}/api/info/pair/list?chain_id=2741&resolution=${resolution}&index=${index}&limit=${limit}&order_by=liquidity desc`;
 
       const res = await fetch(url, { cache: 'no-store' });
 
