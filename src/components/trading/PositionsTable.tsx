@@ -66,7 +66,7 @@ function Th(props: React.HTMLAttributes<HTMLTableCellElement>) {
 }
 
 export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
-  // const connected = useAuthStore((s) => s.isConnected);
+  // Resolve wallet first
   const connectedAddr = useAuthStore((s) => s.address ?? undefined);
   const wallet = walletAddress ?? connectedAddr;
 
@@ -75,31 +75,26 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
   const loadingByWallet = usePositionsStore((s) => s.loadingByWallet);
   const errorByWallet = usePositionsStore((s) => s.errorByWallet);
 
+  // Always call hooks unconditionally
   React.useEffect(() => {
     if (!wallet) return;
     void fetchPositions(wallet);
   }, [wallet, fetchPositions]);
 
-  if (!wallet) {
-    return (
-      <div className="rounded-md border border-white/10 p-6 text-sm text-white/60">
-        Connect your wallet to see positions.
-      </div>
-    );
-  }
+  // Derive values with safe defaults (no early return yet)
+  const loading = wallet ? !!loadingByWallet[wallet] : false;
+  const error = wallet ? (errorByWallet[wallet] ?? null) : null;
 
-  const loading = !!loadingByWallet[wallet];
-  const error = errorByWallet[wallet] ?? null;
-  let data = (rowsByWallet[wallet] ?? []) as ApiPosition[];
-
-  if (tokenAddress) {
+  const rawData: ApiPosition[] = wallet ? (rowsByWallet[wallet] ?? []) : [];
+  const filteredData: ApiPosition[] = React.useMemo(() => {
+    if (!tokenAddress) return rawData;
     const t = tokenAddress.toLowerCase();
-    data = data.filter((p) => p.token_address?.toLowerCase() === t);
-  }
+    return rawData.filter((p) => p.token_address?.toLowerCase() === t);
+  }, [rawData, tokenAddress]);
 
   // Map API rows to display rows, computing PnL
   const rows = React.useMemo(() => {
-    const list = (data ?? [])
+    return filteredData
       .map((p) => {
         const cost = toNum(p.cost); // USD
         const currentValue = toNum(p.current_value); // USD
@@ -120,13 +115,21 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
         };
       })
       .sort((a, b) => b.currentValue - a.currentValue);
+  }, [filteredData]);
 
-    return list;
-  }, [data]);
+  // Early returns come AFTER all hooks above
+  if (!wallet) {
+    return (
+      <div className="rounded-md border border-white/10 p-6 text-sm text-white/60">
+        Connect your wallet to see positions.
+      </div>
+    );
+  }
 
   if (loading) {
     return <div className="rounded-md border border-white/10 p-6 text-sm text-white/60">Loading positions…</div>;
   }
+
   if (error) {
     return (
       <div className="rounded-md border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
@@ -134,6 +137,7 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
       </div>
     );
   }
+
   if (!rows.length) {
     return <div className="rounded-md border border-white/10 p-6 text-sm text-white/60">No open positions yet.</div>;
   }
@@ -189,7 +193,7 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
                   <Image width={4} height={4} src="/images/icons/token_dollars.svg" alt="" className="mr-1 h-4 w-4" />
                   <div className="min-w-0">
                     <Link href={`/token/${r.tokenAddress}`} className="truncate text-white hover:underline">
-                      {/* wang_ {shortAddress(r.tokenAddress)} */}
+                      {/* {shortAddress(r.tokenAddress)} */}
                       Noot
                     </Link>
                   </div>
@@ -197,19 +201,19 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
               </td>
 
               <td className="px-4 py-3 text-left text-white tabular-nums">
-                {/* wang_ {fmtNumber(r.balance, 6)} */}
+                {/* {fmtNumber(r.balance, 6)} */}
                 150
               </td>
               <td className="px-4 py-3 text-left text-white tabular-nums">
-                {/* wang_ {fmtUSD(r.currentValue)} */}
+                {/* {fmtUSD(r.currentValue)} */}
                 $15
               </td>
               <td className="px-4 py-3 text-left text-white tabular-nums">
-                {/* wang_ {fmtUSD(r.costBasis)} */}
+                {/* {fmtUSD(r.costBasis)} */}
                 $12
               </td>
               <td className="px-4 py-3 text-left text-white tabular-nums">
-                {/* wang_ {fmtUSD(r.entryPrice)} */}
+                {/* {fmtUSD(r.entryPrice)} */}
                 $12
               </td>
 
@@ -221,11 +225,11 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
                   )}
                 >
                   <span>
-                    {/* wang_ {(r.pnlAbs >= 0 ? '+' : '') + fmtUSDRaw(r.pnlAbs)} */}
+                    {/* {(r.pnlAbs >= 0 ? '+' : '') + fmtUSDRaw(r.pnlAbs)} */}
                     +$5
                   </span>
                   <span className="text-[11px] opacity-80">
-                    {/* wang_ {(r.pnlPct >= 0 ? '+' : '') + (r.pnlPct * 100).toFixed(2)}% */}
+                    {/* {(r.pnlPct >= 0 ? '+' : '') + (r.pnlPct * 100).toFixed(2)}% */}
                     +14%
                   </span>
                 </div>

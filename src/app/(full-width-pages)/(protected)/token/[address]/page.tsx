@@ -34,8 +34,8 @@ export default function Home() {
   const [tvReady, setTvReady] = useState(false);
 
   const pairAddress = DEFAULT_PAIR_ADDRESS;
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? 'http://160.202.131.23:8081';
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://160.202.131.23:8082';
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://server23.looter.ai/evm-chart-ws/';
 
   const [intervalUI, setIntervalUI] = useState<Interval>('1s');
 

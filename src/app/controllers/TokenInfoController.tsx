@@ -41,7 +41,6 @@ export default function TokenInfoController() {
         const json = await r.json();
         const pairs = json?.data?.pairs ?? json?.pairs ?? [];
         if (!pairs?.length) {
-          // nothing came back — optionally keep last tokenAddress
           return;
         }
 

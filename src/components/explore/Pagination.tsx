@@ -1,6 +1,5 @@
 'use client';
 import * as React from 'react';
-import Image from 'next/image';
 
 type Props = {
   /** 0-based page index */

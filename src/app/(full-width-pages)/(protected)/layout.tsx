@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import TokenInfoController from '@/app/controllers/TokenInfoController';
 import TradingHeader from '@/components/trading/trading-header';
 
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+/** Inner component that uses navigation hooks; wrapped in Suspense by the Layout */
+function ProtectedLayoutInner({ children }: { children: React.ReactNode }) {
   const { status, isConnected } = useAccount();
   const router = useRouter();
   const pathname = usePathname();
@@ -28,7 +29,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
       const nextParam = encodeURIComponent(currentPathWithQuery);
       router.replace(`/authentication?next=${nextParam}`);
     }
-  }, [ready, isConnected, router]);
+  }, [ready, isConnected, router, currentPathWithQuery]);
 
   // Block rendering of protected pages until allowed → no child effects can race
   if (!ready || !isConnected) return null;
@@ -36,12 +37,20 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   return (
     <>
       <TokenInfoController />
-      
+
       <div className="sticky top-0 z-40 bg-[#1a1a1a]">
         <TradingHeader />
       </div>
 
       {children}
     </>
+  );
+}
+
+export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <ProtectedLayoutInner>{children}</ProtectedLayoutInner>
+    </Suspense>
   );
 }

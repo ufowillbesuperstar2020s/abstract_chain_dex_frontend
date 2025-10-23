@@ -41,8 +41,6 @@ export type TokenMetrics = {
   usdPrice: number | null; // token USD (per 1 token)
   liquidityUsd: number | null;
   supplyHuman: number | null;
-
-  // cached raw pieces we need for volume stats
   buyCount?: number | null;
   sellCount?: number | null;
   buyVolumeRaw?: string | null; // all-time, base units

@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -101,6 +101,14 @@ const RESOLUTION_FOR: Record<TimeRange | 'All', '1h' | '4h' | '12h' | '24h'> = {
 };
 
 export default function ExplorePage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-white/60">Loading…</div>}>
+      <ExplorePageInner />
+    </Suspense>
+  );
+}
+
+function ExplorePageInner() {
   const sp = useSearchParams();
 
   // URL state
@@ -134,7 +142,7 @@ export default function ExplorePage() {
     const volume24hTokens = toNum(p._24h_volume) / denom;
     const volume24hUsd = volume24hTokens * priceUsd;
 
-    //const liquidityUsd = (toNum(p.liquidity) / denom) * priceUsd;
+    // const liquidityUsd = (toNum(p.liquidity) / denom) * priceUsd;
     const liquidityUsd = toNum(p.liquidity) / denom;
 
     // const marketcapUsd = (toNum(p.market_cap) / denom) * priceUsd;
