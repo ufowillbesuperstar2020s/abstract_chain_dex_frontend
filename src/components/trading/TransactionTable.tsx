@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTradesStore } from '@/app/stores/trades-store';
 import Spinner from '@/components/ui/Spinner';
+import PositionsTable from '@/components/trading/PositionsTable';
 
 interface Props {
   pairAddress: string;
@@ -43,7 +44,6 @@ export default function TransactionTable({ pairAddress }: Props) {
   const trades = useTradesStore((s) => s.tradesByPair[pairAddress]);
   const loading = useTradesStore((s) => s.loadingByPair[pairAddress]); // initial/refresh loading
   const fetchAPI = useTradesStore((s) => s.fetchTrades);
-  // optional paged fetcher
   const fetchTradesPaged: undefined | ((pair: string, index: number, limit?: number) => Promise<number>) =
     useTradesStore((s) => s.fetchTradesPaged);
 
@@ -98,7 +98,7 @@ export default function TransactionTable({ pairAddress }: Props) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const prevCountRef = useRef(0);
   const prevFirstIdRef = useRef<string | null>(null);
-  const appendingRef = useRef(false); // <— NEW: true while loading next page
+  const appendingRef = useRef(false);
   const fetchingMoreRef = useRef(false);
   const pageRef = useRef(0); // last loaded page index (0-based)
   const [hasMore, setHasMore] = React.useState(true);
@@ -181,7 +181,7 @@ export default function TransactionTable({ pairAddress }: Props) {
         pageRef.current = next;
         if (got < PAGE_SIZE) setHasMore(false);
       } else {
-        // --- Fallback: ts-based paging (your current implementation) ---
+        // --- Fallback: ts-based pagin ---
         const oldest = rows[rows.length - 1];
         await fetchAPI(pairAddress, { before: oldest.ts, limit: PAGE_SIZE });
         const after = useTradesStore.getState().tradesByPair[pairAddress] ?? [];
@@ -241,145 +241,181 @@ export default function TransactionTable({ pairAddress }: Props) {
         </div>
       </div>
 
-      <div ref={scrollerRef} className="no-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-        <table className="min-w-full table-fixed text-sm">
-          <colgroup>
-            {colClasses.map((cls, i) => (
-              <col key={i} className={cls} />
-            ))}
-          </colgroup>
+      {/* Body */}
+      <div className="min-h-0 flex-1 overflow-hidden">
+        {/* POSITIONS TAB */}
+        {activeTab === 'positions' && (
+          <div id="tab-panel-positions" role="tabpanel" className="h-full overflow-auto">
+            <PositionsTable walletAddress="0xf175e01a468b489f77450aebfbee0ecd2c7d83d1" />
+          </div>
+        )}
 
-          <thead className="sticky top-0 z-20 border-b border-white/10 bg-gray-900 dark:bg-gray-900">
-            <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-semibold [&>th]:text-[rgba(130,140,154,1)]">
-              <th className="text-left whitespace-nowrap">
-                <div className="inline-flex items-baseline gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setTimeMode('age')}
-                    aria-pressed={timeMode === 'age'}
-                    className={`cursor-pointer transition ${timeMode === 'age' ? 'text-emerald-400' : 'text-[rgba(130,140,154,1)] hover:text-white'}`}
-                  >
-                    Age
-                  </button>
-                  <span className="text-[rgba(130,140,154,1)]">/</span>
-                  <button
-                    type="button"
-                    onClick={() => setTimeMode('time')}
-                    aria-pressed={timeMode === 'time'}
-                    className={`cursor-pointer leading-3 transition ${timeMode === 'time' ? 'text-emerald-400' : 'text-[rgba(130,140,154,1)] hover:text-white'}`}
-                  >
-                    Time
-                  </button>
-                </div>
-              </th>
-              <th className="text-center">Type</th>
-              <th className="text-left">Price</th>
-              <th className="text-left">Amount</th>
-              <th className="text-left">Total USD</th>
-              <th className="text-left">Trader</th>
-              <th className="text-right"></th>
-            </tr>
-          </thead>
-
-          <tbody className="font-semibold [&>tr>td]:px-3 [&>tr>td]:py-2">
-            {!rows || rows.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-10 text-center text-white/60">
-                  {loading ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Spinner className="h-5 w-5" />
-                      Loading…
-                    </span>
-                  ) : (
-                    'No transactions'
-                  )}
-                </td>
-              </tr>
-            ) : (
-              <>
-                {rows.map((r) => (
-                  <tr
-                    key={r.id}
-                    className="odd:bg-rgb(34, 34, 34) border-b border-white/5 transition-colors even:bg-[rgba(119,136,159,0.04)] hover:bg-white/10"
-                    style={{ height: ROW_H }}
-                  >
-                    <td className="whitespace-nowrap text-[rgba(154,170,192,1)]">
-                      {timeMode === 'age' ? toRelative(r.ts) : formatAbsolute(r.ts)}
-                    </td>
-                    <td
-                      className={`text-center font-medium ${
-                        r.txType === 'buy'
-                          ? 'text-emerald-300'
-                          : r.txType === 'sell'
-                            ? 'text-[rgba(255,68,0,1)]'
-                            : 'text-[rgba(154,170,192,1)]'
-                      }`}
-                    >
-                      {r.txType}
-                    </td>
-                    <td className="text-left text-[rgba(154,170,192,1)]">${r.price_usd ?? '-'}</td>
-                    <td className="text-left text-[rgba(154,170,192,1)]">
-                      {r.amount == null ? '-' : formatNumber(r.amount, { maximumFractionDigits: 6 })}
-                    </td>
-                    <td className="text-left text-[rgba(154,170,192,1)]">
-                      {r.totalUsd == null
-                        ? '-'
-                        : formatNumber(r.totalUsd, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="text-left font-mono text-[rgba(154,170,192,1)]">
-                      <span className="mr-2">{r.wallet}</span>
-                    </td>
-                    <td>
-                      <div className="flex justify-end">
-                        <Link
-                          href={`https://abscan.org/tx/${r.tx}`}
-                          target="_blank"
-                          aria-label="View on explorer"
-                          className="inline-flex"
-                        >
-                          <Image
-                            width={16}
-                            height={16}
-                            src="/images/icons/tx_scan_link.svg"
-                            alt=""
-                            className="h-4 w-4"
-                          />
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
+        {activeTab === 'trades' && (
+          <div
+            ref={scrollerRef}
+            id="tab-panel-trades"
+            role="tabpanel"
+            className="no-scrollbar h-full min-h-0 overflow-x-auto overflow-y-auto"
+          >
+            <table className="min-w-full table-fixed text-sm">
+              <colgroup>
+                {colClasses.map((cls, i) => (
+                  <col key={i} className={cls} />
                 ))}
+              </colgroup>
 
-                {isLoadingMore && (
-                  <tr>
-                    <td colSpan={8} className="px-3 py-4 text-center text-white/60">
-                      <span className="inline-flex items-center gap-2">
-                        <Spinner className="h-4 w-4" />
-                        Loading…
-                      </span>
-                    </td>
-                  </tr>
-                )}
+              <thead className="sticky top-0 z-20 border-b border-white/10 bg-gray-900 dark:bg-gray-900">
+                <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-semibold [&>th]:text-[rgba(130,140,154,1)]">
+                  <th className="text-left whitespace-nowrap">
+                    <div className="inline-flex items-baseline gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setTimeMode('age')}
+                        aria-pressed={timeMode === 'age'}
+                        className={`cursor-pointer transition ${
+                          timeMode === 'age' ? 'text-emerald-400' : 'text-[rgba(130,140,154,1)] hover:text-white'
+                        }`}
+                      >
+                        Age
+                      </button>
+                      <span className="text-[rgba(130,140,154,1)]">/</span>
+                      <button
+                        type="button"
+                        onClick={() => setTimeMode('time')}
+                        aria-pressed={timeMode === 'time'}
+                        className={`cursor-pointer leading-3 transition ${
+                          timeMode === 'time' ? 'text-emerald-400' : 'text-[rgba(130,140,154,1)] hover:text-white'
+                        }`}
+                      >
+                        Time
+                      </button>
+                    </div>
+                  </th>
+                  <th className="text-center">Type</th>
+                  <th className="text-left">Price</th>
+                  <th className="text-left">Amount</th>
+                  <th className="text-left">Total USD</th>
+                  <th className="text-left">Trader</th>
+                  <th className="text-right"></th>
+                </tr>
+              </thead>
 
-                {/* Optional hint / end markers */}
-                {!isLoadingMore && hasMore && (
+              <tbody className="font-semibold [&>tr>td]:px-3 [&>tr>td]:py-2">
+                {!rows || rows.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-3 py-3 text-center text-xs opacity-60">
-                      Scroll to load more
+                    <td colSpan={8} className="px-3 py-10 text-center text-white/60">
+                      {loading ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Spinner className="h-5 w-5" />
+                          Loading…
+                        </span>
+                      ) : (
+                        'No transactions'
+                      )}
                     </td>
                   </tr>
+                ) : (
+                  <>
+                    {rows.map((r) => (
+                      <tr
+                        key={r.id}
+                        className="odd:bg-rgb(34, 34, 34) border-b border-white/5 transition-colors even:bg-[rgba(119,136,159,0.04)] hover:bg-white/10"
+                        style={{ height: ROW_H }}
+                      >
+                        <td className="whitespace-nowrap text-[rgba(154,170,192,1)]">
+                          {timeMode === 'age' ? toRelative(r.ts) : formatAbsolute(r.ts)}
+                        </td>
+                        <td
+                          className={`text-center font-medium ${
+                            r.txType === 'buy'
+                              ? 'text-emerald-300'
+                              : r.txType === 'sell'
+                                ? 'text-[rgba(255,68,0,1)]'
+                                : 'text-[rgba(154,170,192,1)]'
+                          }`}
+                        >
+                          {r.txType}
+                        </td>
+                        <td className="text-left text-[rgba(154,170,192,1)]">${r.price_usd ?? '-'}</td>
+                        <td className="text-left text-[rgba(154,170,192,1)]">
+                          {r.amount == null ? '-' : formatNumber(r.amount, { maximumFractionDigits: 6 })}
+                        </td>
+                        <td className="text-left text-[rgba(154,170,192,1)]">
+                          {r.totalUsd == null
+                            ? '-'
+                            : formatNumber(r.totalUsd, {
+                                style: 'currency',
+                                currency: 'USD',
+                                maximumFractionDigits: 2
+                              })}
+                        </td>
+                        <td className="text-left font-mono text-[rgba(154,170,192,1)]">
+                          <span className="mr-2">{r.wallet}</span>
+                        </td>
+                        <td>
+                          <div className="flex justify-end">
+                            <Link
+                              href={`https://abscan.org/tx/${r.tx}`}
+                              target="_blank"
+                              aria-label="View on explorer"
+                              className="inline-flex"
+                            >
+                              <Image
+                                width={16}
+                                height={16}
+                                src="/images/icons/tx_scan_link.svg"
+                                alt=""
+                                className="h-4 w-4"
+                              />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {isLoadingMore && (
+                      <tr>
+                        <td colSpan={8} className="px-3 py-4 text-center text-white/60">
+                          <span className="inline-flex items-center gap-2">
+                            <Spinner className="h-4 w-4" />
+                            Loading…
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+
+                    {!isLoadingMore && hasMore && (
+                      <tr>
+                        <td colSpan={8} className="px-3 py-3 text-center text-xs opacity-60">
+                          Scroll to load more
+                        </td>
+                      </tr>
+                    )}
+                    {!isLoadingMore && !hasMore && (
+                      <tr>
+                        <td colSpan={8} className="px-3 py-3 text-center text-xs opacity-60">
+                          No more trades
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 )}
-                {!isLoadingMore && !hasMore && (
-                  <tr>
-                    <td colSpan={8} className="px-3 py-3 text-center text-xs opacity-60">
-                      No more trades
-                    </td>
-                  </tr>
-                )}
-              </>
-            )}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* simple placeholders for the other tabs, replace later if needed */}
+        {activeTab === 'orders' && (
+          <div id="tab-panel-orders" role="tabpanel" className="h-full overflow-auto p-6 text-white/60">
+            I need Figma design.
+          </div>
+        )}
+        {activeTab === 'holders' && (
+          <div id="tab-panel-holders" role="tabpanel" className="h-full overflow-auto p-6 text-white/60">
+            I need Figma design.
+          </div>
+        )}
       </div>
     </div>
   );
