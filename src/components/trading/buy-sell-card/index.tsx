@@ -22,7 +22,7 @@ export default function BuySellCard() {
         'bg-[rgba(119,136,159,0.16)] backdrop-blur-[111px]',
         'ring-1 ring-white/10',
         'shadow-[0_8px_30px_rgba(0,0,0,0.45)]',
-        'mr-12'
+        'mr-8'
       ].join(' ')}
     >
       {/* Header */}

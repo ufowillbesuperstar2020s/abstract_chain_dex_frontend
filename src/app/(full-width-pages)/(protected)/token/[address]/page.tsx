@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Script from 'next/script';
 import { ChartingLibraryWidgetOptions } from '@public/tv_charting_library/charting_library/charting_library';
 import '@public/tv_charting_library/datafeed.js';
@@ -39,6 +39,17 @@ export default function Home() {
 
   const [intervalUI, setIntervalUI] = useState<Interval>('1s');
 
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    html.classList.add('token-no-scroll');
+    body.classList.add('token-no-scroll');
+    return () => {
+      html.classList.remove('token-no-scroll');
+      body.classList.remove('token-no-scroll');
+    };
+  }, []);
+
   return (
     <div className="relative">
       {/* decorative glow */}
@@ -56,6 +67,19 @@ export default function Home() {
         />
         <Script src="/tv_charting_library/datafeeds/udf/dist/bundle.js" strategy="afterInteractive" />
         <Script src="/tv_charting_library/streaming.js" strategy="afterInteractive" />
+        <style jsx global>{`
+          html.token-no-scroll,
+          body.token-no-scroll {
+            overflow: hidden; /* hides the document scrollbar */
+
+            -ms-overflow-style: none; /* IE/Edge */
+            scrollbar-width: none; /* Firefox */
+          }
+          html.token-no-scroll::-webkit-scrollbar,
+          body.token-no-scroll::-webkit-scrollbar {
+            display: none; /* Chrome/Safari/Opera */
+          }
+        `}</style>
 
         <div className="col-span-12 row-[2] ml-12 flex min-h-0 flex-col xl:col-span-9">
           {/* token strip */}
