@@ -467,7 +467,7 @@ function ExplorePageInner() {
 
                     {/* token */}
                     <td>
-                      <Link href={`/token/${t.pair_address}`} className="flex items-center gap-3 pl-1">
+                      <a href={`/token/${t.pair_address}`} className="flex items-center gap-3 pl-1">
                         <Image
                           src={t.iconUrl}
                           alt=""
@@ -490,9 +490,7 @@ function ExplorePageInner() {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 const ok = await copyToClipboard(t.pair_address);
-                                if (ok) {
-                                  setToast(true);
-                                }
+                                if (ok) setToast(true);
                               }}
                               className="rounded p-1 hover:bg-white/10 focus:ring-2 focus:ring-white/20 focus:outline-none"
                             >
@@ -500,7 +498,7 @@ function ExplorePageInner() {
                             </button>
                           </div>
                         </div>
-                      </Link>
+                      </a>
                     </td>
 
                     <td className="w-8 pr-1 pl-3">
