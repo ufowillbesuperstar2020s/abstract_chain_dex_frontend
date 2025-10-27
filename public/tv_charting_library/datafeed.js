@@ -1,10 +1,8 @@
-import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
-
 function CustomDatafeed(opts) {
   opts = opts || {};
   this.apiBase = (opts && opts.apiBase) || 'http://160.202.131.23:8081';
   this.wsUrl = (opts && opts.wsUrl) || 'ws://160.202.131.23:8083';
-  this.pairAddress = (opts && opts.pairAddress) || DEFAULT_PAIR_ADDRESS;
+  this.pairAddress = opts && opts.pairAddress;
   this.totalSupply = Number(opts && opts.totalSupply) || 0; // ✅ total supply injected from React
   this._subs = new Map();
 

@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useAccount } from 'wagmi';
-import { DEFAULT_PAIR_ROUTE } from '@/utils/constants';
+import { DEFAULT_PAIR_LIST } from '@/utils/constants';
 
 function sanitizeNext(input: string | null | undefined): string | null {
   if (!input) return null;
@@ -31,7 +31,7 @@ function FullWidthPageLayoutInner({ children }: { children: React.ReactNode }) {
 
   const targetAfterAuth = useMemo(() => {
     const rawNext = searchParams?.get('next') || undefined;
-    return sanitizeNext(rawNext) || DEFAULT_PAIR_ROUTE;
+    return sanitizeNext(rawNext) || DEFAULT_PAIR_LIST;
   }, [searchParams]);
 
   useEffect(() => {

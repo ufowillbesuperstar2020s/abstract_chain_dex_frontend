@@ -1,8 +1,9 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Script from 'next/script';
+import { useParams, notFound } from 'next/navigation';
 import { ChartingLibraryWidgetOptions } from '@public/tv_charting_library/charting_library/charting_library';
 import '@public/tv_charting_library/datafeed.js';
 import TokenDataContainer from '@/components/trading/token-data-container/TokenDataContainer';
@@ -10,7 +11,7 @@ import TransactionTable from '@/components/trading/TransactionTable';
 import ResizableSection from '@/components/layout/ResizableSection';
 import BuySellCard from '@/components/trading/buy-sell-card';
 import type { Interval } from '@/components/trading/token-data-container/IntervalDropdownUI';
-import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
+import { isAddress, getAddress } from 'viem';
 
 const defaultWidgetProps: Partial<ChartingLibraryWidgetOptions> = {
   symbol: 'NOOT',
@@ -33,7 +34,16 @@ const TVChartContainer = dynamic(
 export default function Home() {
   const [tvReady, setTvReady] = useState(false);
 
-  const pairAddress = DEFAULT_PAIR_ADDRESS;
+  const params = useParams<{ address: string | string[] }>();
+
+  const pairAddress = useMemo(() => {
+    const raw = Array.isArray(params?.address) ? params.address[0] : (params?.address ?? '');
+    if (raw && isAddress(raw)) {
+      return getAddress(raw);
+    }
+    notFound();
+  }, [params]);
+
   const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://server23.looter.ai/evm-chart-ws/';
 
@@ -84,7 +94,11 @@ export default function Home() {
         <div className="col-span-12 row-[2] ml-12 flex min-h-0 flex-col xl:col-span-9">
           {/* token strip */}
           <div className="flex-none">
-            <TokenDataContainer interval={intervalUI} onIntervalChange={(v) => setIntervalUI(v)} />
+            <TokenDataContainer
+              interval={intervalUI}
+              onIntervalChange={(v) => setIntervalUI(v)}
+              pairAddress={pairAddress}
+            />
           </div>
 
           {/* chart (fixed/resizeable height) */}

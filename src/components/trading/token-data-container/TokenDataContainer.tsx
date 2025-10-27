@@ -7,7 +7,6 @@ import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
 import { IntervalDropdownUI } from '@/components/trading/token-data-container/IntervalDropdownUI';
 import type { Interval } from '@/components/trading/token-data-container/IntervalDropdownUI';
-import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 
 /** compact number like 10.9K, 1.2M */
 function compact(n: number | null, opts: Intl.NumberFormatOptions = {}): string {
@@ -31,21 +30,21 @@ type Props = {
   interval: Interval;
   /** Callback when user selects a new interval */
   onIntervalChange: (v: Interval) => void;
+
+  pairAddress: string;
 };
 
-export default function TokenDataContainer({ interval, onIntervalChange }: Props) {
+export default function TokenDataContainer({ interval, onIntervalChange, pairAddress }: Props) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
 
   // existing token info (name/symbol/address/decimals)
   const tokenMetadata = useTokenInfoStore((s) => s.tokenMetadata);
   const tokenInfoLoading = useTokenInfoStore((s) => s.isLoading);
-  const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
+  const tokenAddress = tokenMetadata?.address;
 
   // new metrics store
   const { metrics, isLoading: metricsLoading, quote, setPairAddress, fetchMetrics } = useTokenMetricsStore();
-
-  const pairAddress = DEFAULT_PAIR_ADDRESS;
 
   // keep metrics store in sync with current token/pair
   useEffect(() => {
