@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { WalletModal } from '@/components/auth/WalletModal';
 import { useLoginWithAbstract } from '@abstract-foundation/agw-react';
@@ -12,19 +12,51 @@ export default function User() {
   const { logout } = useLoginWithAbstract();
   const { address } = useAccount();
 
+  // Wrap trigger + dropdown so we can detect outside clicks
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  // Close on click outside (capture) and on Esc
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      const el = wrapperRef.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+
+    // Use capture so it still fires if inner elements stop propagation
+    document.addEventListener('mousedown', onPointerDown, true);
+    document.addEventListener('touchstart', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown, true);
+      document.removeEventListener('touchstart', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={wrapperRef}>
       {/* Pill */}
       <div className="hidden h-9 items-center gap-2 rounded-md bg-white/10 py-5.5 pr-1 pl-1 text-white/90 md:flex">
-        <Image src="/images/logo/abs-green.svg" width={5} height={5} alt="" className="h-8 w-8" draggable={false} />
+        <Image src="/images/logo/abs-green.svg" width={5} height={5} alt="" className="h-6 w-6" draggable={false} />
         <span className="max-w-[140px] truncate text-base leading-none font-medium">
           {address ? shortAddress(address) : ''}
         </span>
 
-        {/* Chevron */}
+        {/* Chevron (menu trigger) */}
         <button
           type="button"
           aria-label="Toggle user menu"
+          aria-haspopup="menu"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
           className="grid h-5 w-5 place-items-center rounded-full bg-white/15 hover:bg-white/50"
@@ -52,8 +84,20 @@ export default function User() {
       >
         {/* Settings */}
         <div
-          className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-white/90 hover:bg-white/10"
-          onClick={() => setModalOpen(true)}
+          role="menuitem"
+          tabIndex={0}
+          className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-white/90 outline-none hover:bg-white/10"
+          onClick={() => {
+            setOpen(false);
+            setModalOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setOpen(false);
+              setModalOpen(true);
+            }
+          }}
         >
           <Image src="/images/icons/settings.png" alt="" width={5} height={5} className="h-5 w-5" draggable={false} />
           <span className="text-sm">Settings</span>
@@ -61,9 +105,19 @@ export default function User() {
 
         {/* Log Out */}
         <div
-          className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-white/90 hover:bg-white/10"
+          role="menuitem"
+          tabIndex={0}
+          className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-white/90 outline-none hover:bg-white/10"
           onClick={async () => {
+            setOpen(false);
             await logout();
+          }}
+          onKeyDown={async (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setOpen(false);
+              await logout();
+            }
           }}
         >
           <Image src="/images/icons/log_out.png" alt="" width={5} height={5} className="h-5 w-5" draggable={false} />
