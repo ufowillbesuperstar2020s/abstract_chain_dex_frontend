@@ -1,27 +1,25 @@
 'use client';
 import { useState } from 'react';
+import { useAccount } from 'wagmi';
 import { WalletModal } from '@/components/auth/WalletModal';
 import { useLoginWithAbstract } from '@abstract-foundation/agw-react';
 import Image from 'next/image';
+import { shortAddress } from '@/utils/shortAddress';
 
 export default function User() {
   const [open, setOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const { logout } = useLoginWithAbstract();
+  const { address } = useAccount();
 
   return (
     <div className="relative">
       {/* Pill */}
       <div className="hidden h-9 items-center gap-2 rounded-md bg-white/10 py-5.5 pr-1 pl-1 text-white/90 md:flex">
-        <Image
-          src="/images/logo/user_profile_sample.svg"
-          width={5}
-          height={5}
-          alt=""
-          className="h-8 w-8 rounded-full object-cover ring-1 ring-white/10"
-          draggable={false}
-        />
-        <span className="max-w-[140px] truncate text-base leading-none font-medium">Jane Doe</span>
+        <Image src="/images/logo/abs-green.svg" width={5} height={5} alt="" className="h-8 w-8" draggable={false} />
+        <span className="max-w-[140px] truncate text-base leading-none font-medium">
+          {address ? shortAddress(address) : ''}
+        </span>
 
         {/* Chevron */}
         <button
