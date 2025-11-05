@@ -68,8 +68,7 @@ export default function Home() {
         className="pointer-events-none absolute inset-y-40 right-0 -z-10 hidden w-[min(300px,20vw)] bg-gradient-to-l from-emerald-400/25 via-emerald-400/10 to-transparent blur-2xl xl:block"
       />
 
-      {/* IMPORTANT: 2-row grid: header (auto) + content (fills) */}
-      <div className="grid h-[calc(100vh-25px)] grid-cols-12 grid-rows-[auto,1fr] gap-4 md:gap-6">
+      <div className="row-start-2 contents">
         <Script
           src="/tv_charting_library/charting_library/charting_library.js"
           strategy="afterInteractive"
@@ -90,8 +89,10 @@ export default function Home() {
             display: none; /* Chrome/Safari/Opera */
           }
         `}</style>
+      </div>
 
-        <div className="col-span-12 row-[2] ml-12 flex min-h-0 flex-col xl:col-span-9">
+      <div className="mt-5 grid h-[calc(100vh-25px)] grid-cols-12 grid-rows-1 gap-4 md:gap-6">
+        <div className="col-span-12 ml-12 flex min-h-0 flex-col xl:col-span-9">
           {/* token strip */}
           <div className="flex-none">
             <TokenDataContainer
@@ -116,14 +117,12 @@ export default function Home() {
             </ResizableSection>
           </div>
 
-          {/* 👇 fills the rest; the table will scroll inside itself */}
           <div className="min-h-0 flex-1 overflow-hidden">
             <TransactionTable pairAddress={pairAddress} />
           </div>
         </div>
 
-        {/* right sidebar shares the SAME row -> bottoms align */}
-        <div className="col-span-12 row-[2] min-h-0 space-y-4 xl:col-span-3">
+        <div className="col-span-12 min-h-0 space-y-4 xl:col-span-3">
           <BuySellCard />
         </div>
       </div>
