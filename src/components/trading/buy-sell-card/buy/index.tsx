@@ -4,9 +4,9 @@ import TradeInterface from '../shared/TradeInterface';
 import type { AbstractSwapResult } from '@/types/api';
 import axios, { AxiosResponse } from 'axios';
 import { useAccount, useSendTransaction } from 'wagmi';
-import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 import { parseEther } from 'viem';
 import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
+import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 
 type AbstractSwapRequest = {
   wallet_address: string;
@@ -23,6 +23,8 @@ export default function Buy() {
   const { sendTransactionAsync } = useSendTransaction();
   const slippagePct = useTradeSettingsStore((s) => s.slippagePct);
 
+  const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
+
   return (
     <TradeInterface
       tradeType="BUY"
@@ -37,9 +39,11 @@ export default function Buy() {
           throw new Error('Wallet not connected');
         }
 
+        if (!tokenAddress) throw new Error('Token address not resolved yet');
+
         const payload: AbstractSwapRequest = {
           wallet_address: address,
-          token_address: DEFAULT_PAIR_ADDRESS,
+          token_address: tokenAddress,
           amount_in: amountIn,
           is_sell: false,
           slippage: slippage

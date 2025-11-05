@@ -7,7 +7,6 @@ import axios, { AxiosResponse } from 'axios';
 import { useAccount, useSendTransaction, useSendCalls, usePublicClient } from 'wagmi';
 import { useAbstractClient } from '@abstract-foundation/agw-react';
 import { parseUnits, encodeFunctionData } from 'viem';
-import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 
 const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/evm-chart-api/';
@@ -64,6 +63,7 @@ export default function Sell() {
   const { data: abstractClient } = useAbstractClient();
 
   const tokenMetadata = useTokenInfoStore((s) => s.tokenMetadata);
+  const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
   const decimals = tokenMetadata?.decimals ?? 0;
 
   function toBigIntOrUndefined(v: string | number | bigint | null | undefined): bigint | undefined {
@@ -81,6 +81,7 @@ export default function Sell() {
 
         if (!address) throw new Error('Wallet not connected');
         if (!publicClient) throw new Error('No public client');
+        if (!tokenAddress) throw new Error('Token address not resolved yet');
 
         try {
           const amountInAtomic = parseUnits(amountInHuman, Number(decimals));
@@ -88,7 +89,7 @@ export default function Sell() {
           // Quote swap leg from backend (amount_in in base units)
           const payload: AbstractSwapRequest = {
             wallet_address: address,
-            token_address: DEFAULT_PAIR_ADDRESS,
+            token_address: tokenAddress,
             amount_in: amountInAtomic.toString(),
             is_sell: true,
             slippage
@@ -114,7 +115,7 @@ export default function Sell() {
 
           if (canBatch) {
             const calls: Array<{ to: `0x${string}`; data: `0x${string}`; value?: bigint }> = [
-              { to: DEFAULT_PAIR_ADDRESS as `0x${string}`, data: approveData as `0x${string}` },
+              { to: tokenAddress as `0x${string}`, data: approveData as `0x${string}` },
               {
                 to: swap_tx.to,
                 data: swap_tx.input,
@@ -131,7 +132,7 @@ export default function Sell() {
 
           // ---- Fallback: two normal txs (approve -> swap) ----
           const approveReceipt = await sendTransactionAsync({
-            to: DEFAULT_PAIR_ADDRESS as `0x${string}`,
+            to: tokenAddress as `0x${string}`,
             data: approveData as `0x${string}`,
             value: BigInt(0)
           });

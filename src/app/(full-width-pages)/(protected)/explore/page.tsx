@@ -1,7 +1,6 @@
 'use client';
 
-import React, { Suspense } from 'react';
-import Link from 'next/link';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { pickBasePerPair, DEFAULT_QUOTE_SYMBOLS } from '@/utils/pickBasePerPair';
@@ -10,6 +9,7 @@ import { copyToClipboard } from '@/utils/copyToClipboard';
 import { formatAgeShort } from '@/utils/formatAge';
 import { shortAddress } from '@/utils/shortAddress';
 import FixedFooter from '@/components/explore/FixedFooter';
+import { fmtUSD } from '@/utils/fmtUSD';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
@@ -68,21 +68,6 @@ type SortKey =
   | 'marketcapUsd';
 
 type Sort = { key: SortKey; dir: 'asc' | 'desc' };
-const fmtUSD = (n: number): string => {
-  if (!Number.isFinite(n)) return '$0.00';
-  const abs = Math.abs(n);
-
-  // Handle very small prices (e.g. token prices)
-  if (abs < 1) return `$${n.toFixed(4)}`; // small prices like $0.0001, $0.2345
-
-  // Handle normal/large numbers
-  if (abs >= 1_000_000_000_000) return `$${(n / 1_000_000_000_000).toFixed(2)}T`; // Trillion
-  if (abs >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`; // Billion
-  if (abs >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`; // Million
-  if (abs >= 1_000) return `$${(n / 1_000).toFixed(2)}K`; // Thousand
-
-  return `$${n.toFixed(2)}`;
-};
 
 const cx = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(' ');
 
@@ -130,10 +115,17 @@ function ExplorePageInner() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [index, setIndex] = React.useState(0); // page index for the API
-  const [limit] = React.useState(1000);
+  const [limit, setLimit] = React.useState(50);
   const [total, setTotal] = React.useState(0);
 
   const [toast, setToast] = React.useState(false);
+
+  const COL_WIDTHS = ['3%', '21%', '9%', '10%', '7%', '7%', '7%', '10%', '13%', '13%'];
+
+  const handlePageSizeChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setIndex(0); // reset to first page whenever page size changes
+  };
 
   // map API -> UI row
   const mapPair = (p: ApiPair): TokenRow => {
@@ -174,9 +166,8 @@ function ExplorePageInner() {
       setLoading(true);
       setError(null);
 
-      const resolution = RESOLUTION_FOR[timeRange === '4h' ? '4h' : timeRange] ?? '12h';
+      const resolution = RESOLUTION_FOR[timeRange] ?? '24h';
 
-      // If you hit CORS, switch this to `/api/pairs?...` and add the proxy below.
       const url = `${API_BASE}/api/info/pair/list?chain_id=2741&resolution=${resolution}&index=${index}&limit=${limit}&order_by=liquidity desc`;
 
       const res = await fetch(url, { cache: 'no-store' });
@@ -184,7 +175,7 @@ function ExplorePageInner() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: ApiResp = await res.json();
 
-      const baseOnly = pickBasePerPair(json?.pairs ?? [], { quoteSymbols: DEFAULT_QUOTE_SYMBOLS });
+      const baseOnly = pickBasePerPair(json?.pairs ?? []);
       setTotal(json?.total ?? 0);
       const mapped = baseOnly.map(mapPair);
       setRows(mapped);
@@ -274,7 +265,8 @@ function ExplorePageInner() {
 
   const TIME_OPTIONS = ['All', '1h', '4h', '12h', '24h'] as const;
   type TimeOption = (typeof TIME_OPTIONS)[number];
-  const normalize = (r: TimeOption): TimeRange => (r === 'All' ? '12h' : r);
+  const [activeTab, setActiveTab] = useState<TimeOption>('All');
+  const normalize = (r: TimeOption): TimeRange => (r === 'All' ? '24h' : r);
 
   return (
     <div className="mx-auto w-full px-10 py-3">
@@ -288,10 +280,13 @@ function ExplorePageInner() {
             {TIME_OPTIONS.map((r) => (
               <button
                 key={r}
-                onClick={() => setTimeRange(normalize(r))}
+                onClick={() => {
+                  setActiveTab(r);
+                  setTimeRange(normalize(r));
+                }}
                 className={cx(
                   'h-6 rounded-md px-4 text-sm',
-                  normalize(r) === timeRange ? 'bg-emerald-700 text-white' : 'text-white/70 hover:text-white'
+                  r === activeTab ? 'bg-emerald-700 text-white' : 'text-white/70 hover:text-white'
                 )}
               >
                 {r}
@@ -362,20 +357,13 @@ function ExplorePageInner() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl">
+      <div className="mb-10 overflow-hidden rounded-2xl">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <colgroup>
-              <col style={{ width: '3%' }} /> {/* Fav icon column */}
-              <col style={{ width: '21%' }} /> {/* Token name */}
-              <col style={{ width: '9%' }} /> {/* age */}
-              <col style={{ width: '10%' }} /> {/* Price */}
-              <col style={{ width: '7%' }} /> {/* 1h change */}
-              <col style={{ width: '7%' }} /> {/* 12h change */}
-              <col style={{ width: '7%' }} /> {/* 24h change */}
-              <col style={{ width: '10%' }} /> {/* 24h volume */}
-              <col style={{ width: '13%' }} /> {/* Liquidity */}
-              <col style={{ width: '13%' }} /> {/* MC */}
+              {COL_WIDTHS.map((w, i) => (
+                <col key={i} style={{ width: w }} />
+              ))}
             </colgroup>
             <thead>
               <tr className="h-11 border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] text-white/60">
@@ -533,7 +521,14 @@ function ExplorePageInner() {
       </div>
 
       {/* Fixed footer */}
-      <FixedFooter index={index} total={total} limit={limit} loading={loading} onChange={(next) => setIndex(next)} />
+      <FixedFooter
+        index={index}
+        total={total}
+        limit={limit}
+        loading={loading}
+        onChange={(next) => setIndex(next)}
+        onPageSizeChange={handlePageSizeChange}
+      />
 
       <Toast message="Address copied to clipboard" show={toast} onClose={() => setToast(false)} />
     </div>

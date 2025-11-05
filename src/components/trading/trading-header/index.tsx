@@ -102,14 +102,14 @@ export default function TradingHeader() {
           {/* balance pill */}
           <div
             aria-label="balance"
-            className="balance cq min-w-0 items-center gap-2 overflow-hidden rounded-md bg-white/10 px-2 md:flex"
+            className="balance cq min-w-0 items-center gap-2 overflow-hidden rounded-md bg-white/10 px-3 py-1 md:flex"
           >
             <Image
               src="/images/logo/ethereum_logo.svg"
               alt="ETH"
-              width={7}
-              height={7}
-              className="eth-logo h-7 w-7 shrink-0"
+              width={6}
+              height={6}
+              className="eth-logo h-6 w-6 shrink-0"
               draggable={false}
             />
 
@@ -119,7 +119,7 @@ export default function TradingHeader() {
                 className={[
                   'truncate font-semibold',
                   // shrink text when space is tight (falls back from text-base -> sm -> xs)
-                  'text-base max-[1180px]:text-sm max-[1040px]:text-xs',
+                  'text-sm max-[1180px]:text-sm max-[1040px]:text-xs',
                   !isSignedIn || isLoading || isError ? 'text-white/60' : ''
                 ].join(' ')}
                 title={
@@ -139,7 +139,7 @@ export default function TradingHeader() {
               </div>
 
               {/* Secondary line: USD */}
-              <div className="truncate text-sm text-white/60">
+              <div className="truncate text-xs text-white/60">
                 {!isSignedIn && ''}
                 {isSignedIn && isLoading && ''}
                 {isSignedIn && !isLoading && (formattedUsd ?? '—')}

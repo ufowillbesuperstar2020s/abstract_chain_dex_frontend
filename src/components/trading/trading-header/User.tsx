@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
-import { WalletModal } from '@/components/auth/WalletModal';
 import { useLoginWithAbstract } from '@abstract-foundation/agw-react';
 import Image from 'next/image';
 import { shortAddress } from '@/utils/shortAddress';
@@ -46,7 +45,7 @@ export default function User() {
   return (
     <div className="relative" ref={wrapperRef}>
       {/* Pill */}
-      <div className="hidden h-9 items-center gap-2 rounded-md bg-white/10 py-5.5 pr-1 pl-1 text-white/90 md:flex">
+      <div className="hidden h-9 items-center gap-2 rounded-md bg-white/10 py-5.5 pr-1 pl-2 text-white/90 md:flex">
         <Image src="/images/logo/abs-green.svg" width={5} height={5} alt="" className="h-6 w-6" draggable={false} />
         <span className="max-w-[140px] truncate text-base leading-none font-medium">
           {address ? shortAddress(address) : ''}
@@ -124,9 +123,6 @@ export default function User() {
           <span className="text-sm">Log Out</span>
         </div>
       </div>
-
-      {/* Wallet modal lives at the root so it overlays properly */}
-      <WalletModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }

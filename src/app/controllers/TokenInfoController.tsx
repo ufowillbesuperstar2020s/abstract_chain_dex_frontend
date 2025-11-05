@@ -3,10 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
-import { DEFAULT_PAIR_ADDRESS } from '@/utils/constants';
 import { getTokenAddress } from '@/utils/getTokenAddress';
-
-const FALLBACK = DEFAULT_PAIR_ADDRESS;
 
 function getAddressFromRoute(pathname: string | null, params: Record<string, unknown> | null) {
   const p = params ?? {};
@@ -16,7 +13,7 @@ function getAddressFromRoute(pathname: string | null, params: Record<string, unk
   const parts = path.split('/');
   if (parts[1] === 'token' && parts[2]) return parts[2];
 
-  return FALLBACK;
+  return null;
 }
 
 export default function TokenInfoController() {
@@ -33,8 +30,10 @@ export default function TokenInfoController() {
   useEffect(() => {
     let cancelled = false;
 
-    async function resolveAndLoad() {
-      const url = `/api/search?q=${encodeURIComponent(pairAddress)}&chain_id=2741&resolution=1d&index=0&limit=10`;
+    if (!pairAddress) return;
+
+    async function resolveAndLoad(currentAddr: string) {
+      const url = `/api/search?q=${encodeURIComponent(currentAddr)}&chain_id=2741&resolution=1d&index=0&limit=10`;
       try {
         const r = await fetch(url, { cache: 'no-store' });
         if (!r.ok) throw new Error(`search upstream error ${r.status}`);
@@ -64,7 +63,7 @@ export default function TokenInfoController() {
       }
     }
 
-    resolveAndLoad();
+    resolveAndLoad(pairAddress);
     return () => {
       cancelled = true;
     };

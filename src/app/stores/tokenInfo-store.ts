@@ -8,8 +8,11 @@ import type { TokenMetadata } from '@/types/api';
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
 type TokenInfoState = {
+  tokenAddress: string | null;
   tokenMetadata: TokenMetadata | null;
   isLoading: boolean;
+
+  setTokenAddress: (addr: string | null) => void;
   setTokenMetadata: (data: TokenMetadata | null) => void;
   fetchTokenMetadata: (address: string) => Promise<void>;
   refreshTokenData: () => Promise<void>;
@@ -22,8 +25,11 @@ declare global {
 }
 
 export const useTokenInfoStore = create<TokenInfoState>((set, get) => ({
+  tokenAddress: null,
   tokenMetadata: null,
   isLoading: false,
+
+  setTokenAddress: (addr) => set({ tokenAddress: addr }),
 
   setTokenMetadata: (data) => set({ tokenMetadata: data }),
 
@@ -48,7 +54,7 @@ export const useTokenInfoStore = create<TokenInfoState>((set, get) => ({
         address: fromApis.address ?? address
       };
 
-      set({ tokenMetadata: normalized });
+      set({ tokenMetadata: normalized, tokenAddress: address });
       if (typeof window !== 'undefined') window.gTokenAddress = address;
     } catch (e) {
       console.error('Error fetching token data:', e);
@@ -59,7 +65,7 @@ export const useTokenInfoStore = create<TokenInfoState>((set, get) => ({
   },
 
   refreshTokenData: async () => {
-    const addr = get().tokenMetadata?.address;
+    const addr = get().tokenAddress ?? get().tokenMetadata?.address;
     if (!addr) return;
     await get().fetchTokenMetadata(addr);
   }
