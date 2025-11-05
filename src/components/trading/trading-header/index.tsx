@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import SearchLauncher from '@/components/header/SearchLauncher';
+import RefferalModal from '@/components/trading/modal/RefferalModal';
 
 import { useAccount, useBalance } from 'wagmi';
 import { abstract } from '@/constants/chains/abstract';
@@ -29,6 +30,8 @@ export default function TradingHeader() {
   const formattedCoin = data?.formatted ?? null;
 
   const [usdValue, setUsdValue] = useState<number | null>(null);
+
+  const [refOpen, setRefOpen] = React.useState(false);
 
   useEffect(() => {
     if (!formattedCoin) return;
@@ -157,9 +160,12 @@ export default function TradingHeader() {
             aria-label="Referrals"
             className="flex h-9 items-center gap-2 rounded-md bg-white px-5 py-4 whitespace-nowrap text-black hover:bg-white/90"
             disabled={isConnecting}
+            onClick={() => setRefOpen(true)}
           >
             <span className="text-base leading-none font-medium">Referrals</span>
           </button>
+
+          <RefferalModal open={refOpen} onClose={() => setRefOpen(false)} />
         </div>
       </div>
     </div>
