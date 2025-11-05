@@ -8,6 +8,7 @@ import { useAccount, useBalance } from 'wagmi';
 import { abstract } from '@/constants/chains/abstract';
 import { formatUsd } from '@/utils/formatters';
 import { ethToUsd } from '@/utils/ethToUsd';
+import Link from 'next/link';
 import User from './User';
 
 export default function TradingHeader() {
@@ -62,7 +63,7 @@ export default function TradingHeader() {
       <div className="flex w-full items-center justify-between border-b border-[rgba(130,140,154,0.24)] p-2">
         {/* LEFT AREA */}
         <div className="ml-4 flex items-center gap-4">
-          <div className="flex h-13 items-center gap-3 overflow-hidden dark:border-gray-800">
+          <Link href="/" className="flex h-13 items-center gap-3 overflow-hidden dark:border-gray-800">
             <Image
               width={32}
               height={32}
@@ -80,13 +81,15 @@ export default function TradingHeader() {
               <Image src="/images/logo/letters/e.svg" alt="" width={16} height={16} className="h-3.5 w-auto" />
               <Image src="/images/logo/letters/r.svg" alt="" width={16} height={16} className="h-3.5 w-auto" />
             </span>
-          </div>
+          </Link>
 
           <nav className="ml-5 flex items-center gap-8">
-            <h4 className="inline-flex shrink-0 items-center gap-2 text-base leading-tight text-gray-800 dark:text-white/90">
-              <Image src="/images/icons/trending.svg" alt="Trending" width={20} height={20} className="h-5 w-5" />
-              <span>Trending</span>
-            </h4>
+            <Link href="/">
+              <h4 className="inline-flex shrink-0 items-center gap-2 text-base leading-tight text-gray-800 dark:text-white/90">
+                <Image src="/images/icons/trending.svg" alt="Trending" width={20} height={20} className="h-5 w-5" />
+                <span>Trending</span>
+              </h4>
+            </Link>
 
             <h4 className="inline-flex shrink-0 items-center gap-2 text-base text-gray-800 dark:text-white/90">
               <Image src="/images/icons/portfolio.png" alt="Portfolio" width={17} height={17} />
