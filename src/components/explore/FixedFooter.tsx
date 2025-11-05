@@ -8,25 +8,39 @@ type Props = {
   total: number;
   limit: number;
   loading?: boolean;
-  onChange: (next: number) => void; // 0-based page change
+  onChange: (next: number) => void;
   onPageSizeChange?: (newLimit: number) => void;
+  currentCount?: number;
   children?: React.ReactNode;
 };
 
-export default function FixedFooter({ index, total, limit, loading, onChange, onPageSizeChange, children }: Props) {
+export default function FixedFooter({
+  index,
+  total,
+  limit,
+  loading,
+  onChange,
+  onPageSizeChange,
+  currentCount,
+  children
+}: Props) {
   const pageSizeOptions = [10, 20, 50, 100, 200, 500];
+  const computedCount = Math.max(0, Math.min(limit, total - index * limit));
+  const resultsOnPage = typeof currentCount === 'number' ? currentCount : computedCount;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#1a1a1a]">
-      <div className="mx-auto w-full max-w-[1400px] px-4">
-        <div className="flex h-14 items-center justify-between gap-4">
-          {/* Total results */}
-          <div className="text-xs text-white/60">
-            {total ? <span>{Intl.NumberFormat().format(total)} results</span> : <span>&nbsp;</span>}
+      <div className="w-full px-4">
+        <div className="ml-10 flex h-14 items-center gap-4">
+          <div className="border-r-2 border-white/10 pr-5 text-base text-white/60">
+            Total : {total ? <span>{Intl.NumberFormat().format(total)} </span> : <span>&nbsp;</span>}
           </div>
 
-          {/* Pagination */}
-          <div className="flex flex-1 items-center justify-center">
+          <div className="text-base text-white/60">
+            Results on page : <span>{Intl.NumberFormat().format(resultsOnPage)}</span>
+          </div>
+
+          <div className="ml-auto flex items-center gap-4">
             <Pagination
               index={index}
               total={total}
@@ -35,11 +49,8 @@ export default function FixedFooter({ index, total, limit, loading, onChange, on
               onChange={onChange}
               siblingCount={1}
             />
-          </div>
 
-          {/* Page size selector */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center text-xs text-white/70">
+            <div className="mr-5 flex items-center text-xs text-white/70">
               <select
                 value={limit}
                 onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
@@ -51,10 +62,9 @@ export default function FixedFooter({ index, total, limit, loading, onChange, on
                   </option>
                 ))}
               </select>
-              <span className="ml-2 text-white/60">Items per page</span>
+              <span className="ml-2 whitespace-nowrap text-white/60">Items per page</span>
             </div>
 
-            {/* Right slot ( “Go to page”) */}
             {children}
           </div>
         </div>

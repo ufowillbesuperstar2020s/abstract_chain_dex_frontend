@@ -3,7 +3,7 @@
 import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { pickBasePerPair, DEFAULT_QUOTE_SYMBOLS } from '@/utils/pickBasePerPair';
+import { pickBasePerPair } from '@/utils/pickBasePerPair';
 import Toast from '@/components/ui/Toast';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { formatAgeShort } from '@/utils/formatAge';
@@ -99,7 +99,7 @@ function ExplorePageInner() {
   const sp = useSearchParams();
 
   // URL state
-  const initialRange = (sp.get('range') as TimeRange) || '4h';
+  const initialRange = (sp.get('range') as TimeRange) || '24h';
   const initialSortKey = (sp.get('sort') as SortKey) || 'liquidityUsd';
   const initialSortDir = (sp.get('dir') as Sort['dir']) || 'desc';
 
@@ -528,6 +528,7 @@ function ExplorePageInner() {
         loading={loading}
         onChange={(next) => setIndex(next)}
         onPageSizeChange={handlePageSizeChange}
+        currentCount={filtered.length} // ← add this
       />
 
       <Toast message="Address copied to clipboard" show={toast} onClose={() => setToast(false)} />
