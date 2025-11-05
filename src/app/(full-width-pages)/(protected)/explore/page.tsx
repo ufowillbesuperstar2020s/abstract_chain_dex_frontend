@@ -270,6 +270,12 @@ function ExplorePageInner() {
 
   return (
     <div className="mx-auto w-full px-10 py-3">
+      {/* decorative glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed top-1/2 right-0 -z-10 hidden h-[720px] w-[min(800px,30vw)] -translate-y-1/2 bg-gradient-to-l from-emerald-400/25 via-emerald-400/10 to-transparent blur-2xl xl:block"
+      />
+
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -366,7 +372,7 @@ function ExplorePageInner() {
               ))}
             </colgroup>
             <thead>
-              <tr className="h-11 border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] text-white/60">
+              <tr className="h-11 bg-white/10 text-white/90">
                 <th className="pr-2 pl-4 text-left font-medium"> </th>
                 <Th label="Token name" active={sort.key === 'symbol'} dir={sort.dir} />
                 <th> </th>
