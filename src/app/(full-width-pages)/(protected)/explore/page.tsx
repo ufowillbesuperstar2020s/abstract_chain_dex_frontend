@@ -271,7 +271,7 @@ function ExplorePageInner() {
         : // OLD DEFAULT ACTIVE
           'border border-white/20 text-white'
       : // INACTIVE
-        'border border-white/10 text-white/50 hover:bg-white/10';
+        'text-white/50 hover:bg-white/10';
 
     return (
       <button onClick={onClick} className={`${base} ${style}`}>
@@ -325,7 +325,7 @@ function ExplorePageInner() {
               activeVariant="green"
               leftIcon={<Image width={12} height={12} src="/images/icons/volume.svg" alt="Volume" />}
               leftIconActive={
-                <Image width={12} height={12} src="/images/icons/volume_clicked.svg" alt="Volume active" />
+                <Image width={12} height={12} src="/images/icons/volume_active.svg" alt="Volume active" />
               }
             >
               Volume
@@ -333,8 +333,17 @@ function ExplorePageInner() {
             <FilterPill
               active={showFavorites}
               onClick={() => setShowFavorites((v) => !v)}
+              activeVariant="green"
               leftIcon={
                 <svg viewBox="0 0 24 24" className="h-4 w-4">
+                  <path
+                    fill="currentColor"
+                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.59 4.81 14.26 4 16 4 18.5 4 20.5 6 20.5 8.5c0 3.78-3.4 6.86-8.05 11.54L12 21.35z"
+                  />
+                </svg>
+              }
+              leftIconActive={
+                <svg viewBox="0 0 24 24" className="h-4 w-4 drop-shadow-[0_0_6px_rgba(16,185,129,0.7)]">
                   <path
                     fill="currentColor"
                     d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.59 4.81 14.26 4 16 4 18.5 4 20.5 6 20.5 8.5c0 3.78-3.4 6.86-8.05 11.54L12 21.35z"
@@ -347,7 +356,9 @@ function ExplorePageInner() {
             <FilterPill
               active={onlyNew}
               onClick={() => setOnlyNew((v) => !v)}
-              leftIcon={<Image width={12} height={12} src="/images/icons/new.svg" alt="User" />}
+              activeVariant="green"
+              leftIcon={<Image width={12} height={12} src="/images/icons/new.svg" alt="New" />}
+              leftIconActive={<Image width={12} height={12} src="/images/icons/new_active.svg" alt="New" />}
             >
               New
             </FilterPill>
