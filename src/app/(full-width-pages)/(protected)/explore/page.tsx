@@ -3,7 +3,7 @@
 import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { pickBasePerPair } from '@/utils/pickBasePerPair';
+// import { pickBasePerPair } from '@/utils/pickBasePerPair';
 import Toast from '@/components/ui/Toast';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { formatAgeShort } from '@/utils/formatAge';
@@ -175,9 +175,9 @@ function ExplorePageInner() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: ApiResp = await res.json();
 
-      const baseOnly = pickBasePerPair(json?.pairs ?? []);
+      // const baseOnly = pickBasePerPair(json?.pairs ?? []);
       setTotal(json?.total ?? 0);
-      const mapped = baseOnly.map(mapPair);
+      const mapped = json.pairs.map(mapPair);
       setRows(mapped);
     } catch (e: unknown) {
       setError((e as Error)?.message ?? 'Failed to load');
