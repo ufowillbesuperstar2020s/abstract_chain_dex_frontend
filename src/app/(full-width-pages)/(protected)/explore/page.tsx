@@ -120,11 +120,20 @@ function ExplorePageInner() {
 
   const [toast, setToast] = React.useState(false);
 
-  const COL_WIDTHS = ['3%', '21%', '9%', '10%', '7%', '7%', '7%', '10%', '13%', '13%'];
+  const DEFAULT_SORT: Sort = { key: 'liquidityUsd', dir: 'desc' };
+
+  const COL_WIDTHS = ['3%', '20%', '9%', '10%', '10%', '10%', '10%', '10%', '10%', '10%'];
 
   const handlePageSizeChange = (newLimit: number) => {
     setLimit(newLimit);
     setIndex(0); // reset to first page whenever page size changes
+  };
+
+  const handleVolumeToggle = () => {
+    setSort((s) => {
+      if (s.key === 'volume24hUsd') return DEFAULT_SORT;
+      return { key: 'volume24hUsd', dir: 'desc' };
+    });
   };
 
   // map API -> UI row
@@ -242,26 +251,35 @@ function ExplorePageInner() {
     active,
     onClick,
     children,
-    leftIcon
+    leftIcon,
+    leftIconActive,
+    activeVariant = 'default'
   }: {
     active?: boolean;
     onClick?: () => void;
     children: React.ReactNode;
     leftIcon?: React.ReactNode;
-  }) => (
-    <button
-      onClick={onClick}
-      className={cx(
-        'inline-flex h-8 items-center gap-2 px-3 py-2 text-xs',
-        active
-          ? 'rounded-md border border-white/20 text-white'
-          : 'rounded-md border-white/10 text-white/50 hover:bg-white/10'
-      )}
-    >
-      {leftIcon}
-      {children}
-    </button>
-  );
+    leftIconActive?: React.ReactNode;
+    activeVariant?: 'default' | 'green';
+  }) => {
+    const base = 'inline-flex h-8 items-center gap-2 px-3 py-2 text-xs rounded-md transition-colors';
+
+    const style = active
+      ? activeVariant === 'green'
+        ? // GREEN ACTIVE
+          'border border-emerald-500 bg-emerald-500/15 text-emerald-400'
+        : // OLD DEFAULT ACTIVE
+          'border border-white/20 text-white'
+      : // INACTIVE
+        'border border-white/10 text-white/50 hover:bg-white/10';
+
+    return (
+      <button onClick={onClick} className={`${base} ${style}`}>
+        {active ? (leftIconActive ?? leftIcon) : leftIcon}
+        {children}
+      </button>
+    );
+  };
 
   const TIME_OPTIONS = ['All', '1h', '4h', '12h', '24h'] as const;
   type TimeOption = (typeof TIME_OPTIONS)[number];
@@ -303,8 +321,12 @@ function ExplorePageInner() {
           <div className="ml-4 hidden items-center gap-2 md:flex">
             <FilterPill
               active={sort.key === 'volume24hUsd'}
-              onClick={() => setSortKey('volume24hUsd')}
-              leftIcon={<Image width={12} height={12} src="/images/icons/volume.svg" alt="User" />}
+              onClick={handleVolumeToggle} //toggle between volume DESC and default
+              activeVariant="green"
+              leftIcon={<Image width={12} height={12} src="/images/icons/volume.svg" alt="Volume" />}
+              leftIconActive={
+                <Image width={12} height={12} src="/images/icons/volume_clicked.svg" alt="Volume active" />
+              }
             >
               Volume
             </FilterPill>
