@@ -65,7 +65,8 @@ type SortKey =
   | 'change24hPct'
   | 'volume24hUsd'
   | 'liquidityUsd'
-  | 'marketcapUsd';
+  | 'marketcapUsd'
+  | 'ageSeconds';
 
 type Sort = { key: SortKey; dir: 'asc' | 'desc' };
 
@@ -104,10 +105,8 @@ function ExplorePageInner() {
   const initialSortDir = (sp.get('dir') as Sort['dir']) || 'desc';
 
   const [timeRange, setTimeRange] = React.useState<TimeRange>(initialRange);
-  const [query, setQuery] = React.useState('');
   const [favorites, setFavorites] = React.useState<Set<string>>(new Set());
   const [showFavorites, setShowFavorites] = React.useState(false);
-  const [onlyNew, setOnlyNew] = React.useState(false);
 
   const [sort, setSort] = React.useState<Sort>({ key: initialSortKey, dir: initialSortDir });
 
@@ -134,6 +133,10 @@ function ExplorePageInner() {
       if (s.key === 'volume24hUsd') return DEFAULT_SORT;
       return { key: 'volume24hUsd', dir: 'desc' };
     });
+  };
+
+  const handleNewToggle = () => {
+    setSort((s) => (s.key === 'ageSeconds' && s.dir === 'asc' ? DEFAULT_SORT : { key: 'ageSeconds', dir: 'asc' }));
   };
 
   // map API -> UI row
@@ -205,19 +208,7 @@ function ExplorePageInner() {
   const filtered = React.useMemo(() => {
     let r = rows;
 
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      r = r.filter(
-        (x) =>
-          x.symbol.toLowerCase().includes(q) ||
-          x.name.toLowerCase().includes(q) ||
-          x.pair_address.toLowerCase().includes(q)
-      );
-    }
-
     if (showFavorites) r = r.filter((x) => favorites.has(x.pair_address));
-
-    if (onlyNew) r = r.filter((x) => x.ageSeconds <= 3600);
 
     type NumericSortKey = Exclude<SortKey, 'symbol'>;
     const getSortVal = (row: TokenRow, key: SortKey): number | string =>
@@ -231,7 +222,7 @@ function ExplorePageInner() {
       if (typeof av === 'number' && typeof bv === 'number') return (av < bv ? -1 : av > bv ? 1 : 0) * dir;
       return 0;
     });
-  }, [rows, query, showFavorites, onlyNew, favorites, sort]);
+  }, [rows, showFavorites, favorites, sort]);
 
   const toggleFav = (addr: string) =>
     setFavorites((prev) => {
@@ -354,8 +345,8 @@ function ExplorePageInner() {
               Favorites
             </FilterPill>
             <FilterPill
-              active={onlyNew}
-              onClick={() => setOnlyNew((v) => !v)}
+              active={sort.key === 'ageSeconds' && sort.dir === 'asc'}
+              onClick={handleNewToggle}
               activeVariant="green"
               leftIcon={<Image width={12} height={12} src="/images/icons/new.svg" alt="New" />}
               leftIconActive={<Image width={12} height={12} src="/images/icons/new_active.svg" alt="New" />}
