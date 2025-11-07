@@ -94,10 +94,12 @@ export default function TradingHeader() {
               </h4>
             </Link>
 
-            <h4 className="inline-flex shrink-0 items-center gap-2 text-base text-gray-800 dark:text-white/90">
-              <Image src="/images/icons/portfolio.png" alt="Portfolio" width={17} height={17} />
-              <span>Portfolio</span>
-            </h4>
+            <Link href="/portfolio">
+              <h4 className="inline-flex shrink-0 items-center gap-2 text-base text-gray-800 dark:text-white/90">
+                <Image src="/images/icons/portfolio.png" alt="Portfolio" width={17} height={17} />
+                <span>Portfolio</span>
+              </h4>
+            </Link>
           </nav>
 
           <SearchLauncher />
