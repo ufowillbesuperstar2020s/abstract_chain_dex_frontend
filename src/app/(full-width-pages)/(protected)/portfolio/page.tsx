@@ -23,6 +23,12 @@ export default function PortfolioPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-6">
+      {/* decorative glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed left-1/2 -z-10 hidden h-[320px] w-[min(900px,60vw)] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-emerald-400/25 via-emerald-400/10 to-transparent blur-2xl xl:block"
+      />
+
       <header className="mb-6">
         <h1 className="text-3xl font-semibold text-white">My Portfolio</h1>
         <p className="mt-1 text-sm text-white/60">Track your holdings, balance, and profit in real time.</p>

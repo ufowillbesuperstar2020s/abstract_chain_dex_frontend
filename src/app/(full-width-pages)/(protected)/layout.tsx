@@ -38,7 +38,7 @@ function ProtectedLayoutInner({ children }: { children: React.ReactNode }) {
     <>
       <TokenInfoController />
 
-      <div className="sticky top-0 z-40 bg-[#1a1a1a]">
+      <div className="sticky top-0 z-40 bg-transparent">
         <TradingHeader />
       </div>
 
