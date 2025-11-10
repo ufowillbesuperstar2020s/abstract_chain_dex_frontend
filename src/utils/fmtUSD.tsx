@@ -76,6 +76,6 @@ export function fmtUSD(n: number): ReactNode {
   if (abs >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `$${(n / 1_000).toFixed(2)}K`;
 
-  // Normal
-  return `$${n.toFixed(2)}`;
+  // Normal (clean result: remove ".00")
+  return `$${Number(n.toFixed(2))}`;
 }
