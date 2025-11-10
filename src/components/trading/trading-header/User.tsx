@@ -7,7 +7,7 @@ import { shortAddress } from '@/utils/shortAddress';
 
 export default function User() {
   const [open, setOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+
   const { logout } = useLoginWithAbstract();
   const { address } = useAccount();
 
@@ -88,13 +88,11 @@ export default function User() {
           className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-white/90 outline-none hover:bg-white/10"
           onClick={() => {
             setOpen(false);
-            setModalOpen(true);
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               setOpen(false);
-              setModalOpen(true);
             }
           }}
         >

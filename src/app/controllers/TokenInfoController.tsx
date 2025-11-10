@@ -25,7 +25,7 @@ export default function TokenInfoController() {
   const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
   const setTokenAddress = useTokenInfoStore((s) => s.setTokenAddress);
   const fetchTokenMetadata = useTokenInfoStore((s) => s.fetchTokenMetadata);
-  const setError = useState<string | null>(null)[1];
+  const [, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +67,7 @@ export default function TokenInfoController() {
     return () => {
       cancelled = true;
     };
-  }, [pathname, params, tokenAddress, setTokenAddress, fetchTokenMetadata]);
+  }, [pairAddress, tokenAddress, setTokenAddress, fetchTokenMetadata]);
 
   return null; // no UI, just side-effect controller
 }
