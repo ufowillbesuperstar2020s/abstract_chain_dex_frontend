@@ -103,7 +103,7 @@ export default function HoldingsTable({ rows }: Props) {
           {computed.map((r) => (
             <tr key={r.symbol} className="border-b border-white/10">
               <td className="flex items-center gap-2 py-3 pl-7">
-                <Image src={r.iconUrl} alt="" className="h-5 w-5 rounded-full" />
+                <Image src={r.iconUrl} alt="" width={5} height={5} className="h-5 w-5 rounded-full" />
                 <div className="text-white">{r.name}</div>
               </td>
               <td className="px-3 py-3 text-white">
@@ -115,7 +115,13 @@ export default function HoldingsTable({ rows }: Props) {
               <td className="px-3 py-3 text-white">
                 <div className="flex">
                   <span className="mr-2">{`${fmtUSD(r.pnlUSD)}  /  ${r.pnlPct.toFixed(2)}%`}</span>
-                  <Image src={'/images/icons/pnl_ascent.svg'} alt="" className="mt-1 h-3 w-3 rounded-full" />
+                  <Image
+                    src={'/images/icons/pnl_ascent.svg'}
+                    width={3}
+                    height={3}
+                    alt=""
+                    className="mt-1 h-3 w-3 rounded-full"
+                  />
                 </div>
               </td>
             </tr>

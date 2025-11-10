@@ -35,11 +35,11 @@ export default function PortfolioPage() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 py-6">
+    <div className="mx-auto w-[min(92vw,1700px)] px-6 py-6 xl:px-8">
       {/* decorative glow */}
       <div
         aria-hidden
-        className="pointer-events-none fixed left-1/2 -z-10 hidden h-[320px] w-[min(900px,60vw)] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-emerald-400/25 via-emerald-400/10 to-transparent blur-2xl xl:block"
+        className="pointer-events-none absolute left-1/2 -z-10 h-[320px] w-[900px] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-emerald-400/25 via-emerald-400/10 to-transparent blur-2xl"
       />
 
       <header className="mt-2 mb-6">
