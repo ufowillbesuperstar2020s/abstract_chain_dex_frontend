@@ -22,7 +22,6 @@ export default function Buy() {
   const { address } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
   const slippagePct = useTradeSettingsStore((s) => s.slippagePct);
-
   const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
 
   return (

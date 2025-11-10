@@ -8,6 +8,7 @@ import { useAccount, useSendTransaction, useSendCalls, usePublicClient } from 'w
 import { useAbstractClient } from '@abstract-foundation/agw-react';
 import { parseUnits, encodeFunctionData } from 'viem';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
+import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
 
 const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/evm-chart-api/';
 
@@ -66,6 +67,8 @@ export default function Sell() {
   const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
   const decimals = tokenMetadata?.decimals ?? 0;
 
+  const slippagePct = useTradeSettingsStore((s) => s.slippagePct);
+
   function toBigIntOrUndefined(v: string | number | bigint | null | undefined): bigint | undefined {
     if (v === null || v === undefined) return undefined;
     if (typeof v === 'bigint') return v;
@@ -77,8 +80,7 @@ export default function Sell() {
       tradeType="SELL"
       onSubmit={async (p) => {
         const amountInHuman: string = p.amount.toString();
-        const slippage = 50; // wang_tmp
-
+        const slippage = Number.isFinite(slippagePct) ? slippagePct : 20;
         if (!address) throw new Error('Wallet not connected');
         if (!publicClient) throw new Error('No public client');
         if (!tokenAddress) throw new Error('Token address not resolved yet');
