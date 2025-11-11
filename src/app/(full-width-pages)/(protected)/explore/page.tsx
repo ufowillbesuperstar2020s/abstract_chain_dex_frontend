@@ -3,7 +3,6 @@
 import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-// import { pickBasePerPair } from '@/utils/pickBasePerPair';
 import Toast from '@/components/ui/toast/Toast';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { formatAgeShort } from '@/utils/formatAge';
@@ -13,24 +12,28 @@ import { fmtUSD } from '@/utils/fmtUSD';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
+// ========= layout constants (tweak to your app) =========
+const APP_HEADER_H = 72; // px — height of your global fixed header
+const FOOTER_H = 64; // px — height of your FixedFooter
+
 // ---------- types from UI ----------
 type TimeRange = '1h' | '4h' | '12h' | '24h';
 
 type TokenRow = {
-  pair_address: string; // pair_address (used for navigation)
-  iconUrl: string; // token_logo_url
-  symbol: string; // token_symbol
-  name: string; // token_name
+  pair_address: string;
+  iconUrl: string;
+  symbol: string;
+  name: string;
   ageSeconds: number;
   ageLabel: string;
-  priceUsd: number; // usd_price
-  change1hPct: number; // _1h_change
-  change12hPct: number; // _12h_change
-  change24hPct: number; // _24h_change
+  priceUsd: number;
+  change1hPct: number;
+  change12hPct: number;
+  change24hPct: number;
   decimals: number;
-  volume24hUsd: number; // _24h_volume
-  liquidityUsd: number; // liquidity
-  marketcapUsd: number; // market_cap
+  volume24hUsd: number;
+  liquidityUsd: number;
+  marketcapUsd: number;
 };
 
 // ---------- API response types ----------
@@ -39,7 +42,7 @@ type ApiPair = {
   _1h_change: string;
   _24h_change: string;
   _24h_volume: string;
-  age: number; // seconds
+  age: number;
   liquidity: string;
   market_cap: string;
   pair_address: string;
@@ -72,7 +75,7 @@ type Sort = { key: SortKey; dir: 'asc' | 'desc' };
 
 const cx = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(' ');
 
-// parse huge numeric strings safely for display (falls back to 0 on NaN)
+// parse huge numeric strings safely for display
 const toNum = (x: string | number | null | undefined): number => {
   if (typeof x === 'number') return x;
   if (!x) return 0;
@@ -113,7 +116,7 @@ function ExplorePageInner() {
   const [rows, setRows] = React.useState<TokenRow[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [index, setIndex] = React.useState(0); // page index for the API
+  const [index, setIndex] = React.useState(0);
   const [limit, setLimit] = React.useState(50);
   const [total, setTotal] = React.useState(0);
 
@@ -125,7 +128,7 @@ function ExplorePageInner() {
 
   const handlePageSizeChange = (newLimit: number) => {
     setLimit(newLimit);
-    setIndex(0); // reset to first page whenever page size changes
+    setIndex(0);
   };
 
   const handleVolumeToggle = () => {
@@ -179,15 +182,12 @@ function ExplorePageInner() {
       setError(null);
 
       const resolution = RESOLUTION_FOR[timeRange] ?? '24h';
-
       const url = `${API_BASE}/api/info/pair/list?chain_id=2741&resolution=${resolution}&index=${index}&limit=${limit}&order_by=liquidity desc`;
 
       const res = await fetch(url, { cache: 'no-store' });
-
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json: ApiResp = await res.json();
 
-      // const baseOnly = pickBasePerPair(json?.pairs ?? []);
+      const json: ApiResp = await res.json();
       setTotal(json?.total ?? 0);
       const mapped = json.pairs.map(mapPair);
       setRows(mapped);
@@ -199,15 +199,13 @@ function ExplorePageInner() {
     }
   }, [timeRange, index, limit]);
 
-  // refetch when range / page changes
   React.useEffect(() => {
     fetchPairs();
   }, [fetchPairs]);
 
-  // derived (filter + sort) from fetched rows
+  // derived (filter + sort)
   const filtered = React.useMemo(() => {
     let r = rows;
-
     if (showFavorites) r = r.filter((x) => favorites.has(x.pair_address));
 
     type NumericSortKey = Exclude<SortKey, 'symbol'>;
@@ -227,11 +225,8 @@ function ExplorePageInner() {
   const toggleFav = (addr: string) =>
     setFavorites((prev) => {
       const next = new Set(prev);
-      if (next.has(addr)) {
-        next.delete(addr);
-      } else {
-        next.add(addr);
-      }
+      if (next.has(addr)) next.delete(addr);
+      else next.add(addr);
       return next;
     });
 
@@ -254,16 +249,11 @@ function ExplorePageInner() {
     activeVariant?: 'default' | 'green';
   }) => {
     const base = 'inline-flex h-8 items-center gap-2 px-3 py-2 text-xs rounded-md transition-colors';
-
     const style = active
-      ? activeVariant === 'green'
-        ? // GREEN ACTIVE
-          'border border-emerald-500 bg-emerald-500/15 text-emerald-400'
-        : // OLD DEFAULT ACTIVE
-          'border border-white/20 text-white'
-      : // INACTIVE
-        'text-white/50 hover:bg-white/10';
-
+      ? activeVariant == 'green'
+        ? 'border border-emerald-500 bg-emerald-500/15 text-emerald-400'
+        : 'border border-white/20 text-white'
+      : 'text-white/50 hover:bg-white/10';
     return (
       <button onClick={onClick} className={`${base} ${style}`}>
         {active ? (leftIconActive ?? leftIcon) : leftIcon}
@@ -278,15 +268,24 @@ function ExplorePageInner() {
   const normalize = (r: TimeOption): TimeRange => (r === 'All' ? '24h' : r);
 
   return (
-    <div className="mx-auto w-full px-10 py-3">
+    <div
+      className="fixed inset-x-0 bottom-0 mx-auto w-full px-10"
+      style={{
+        top: `${APP_HEADER_H}px`, // sits exactly below your global header
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+        overflow: 'hidden' // prevents whole-page scroll
+      }}
+    >
       {/* decorative glow */}
       <div
         aria-hidden
         className="pointer-events-none fixed top-1/2 right-0 -z-10 hidden h-[720px] w-[min(800px,30vw)] -translate-y-1/2 bg-gradient-to-l from-emerald-400/25 via-emerald-400/10 to-transparent blur-2xl xl:block"
       />
 
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
+      {/* Page header (stays put) */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-xl text-white/90">Trending</h1>
 
@@ -312,7 +311,7 @@ function ExplorePageInner() {
           <div className="ml-4 hidden items-center gap-2 md:flex">
             <FilterPill
               active={sort.key === 'volume24hUsd'}
-              onClick={handleVolumeToggle} //toggle between volume DESC and default
+              onClick={handleVolumeToggle}
               activeVariant="green"
               leftIcon={<Image width={12} height={12} src="/images/icons/volume.svg" alt="Volume" />}
               leftIconActive={
@@ -363,23 +362,25 @@ function ExplorePageInner() {
             title="Filters"
           >
             <Image width={15} height={15} src="/images/icons/filters.svg" alt="User" />
-            Filters
-            <span className="text-emerald-500">(5)</span>
+            Filters <span className="text-emerald-500">(5)</span>
           </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="mb-10 overflow-hidden rounded-2xl">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+      {/* Table area (only this scrolls) */}
+      <div className="min-h-0 flex-1 overflow-hidden rounded-2xl">
+        {/* The ONLY vertical scroller */}
+        <div className="h-full overflow-x-auto overflow-y-auto" style={{ paddingBottom: `${FOOTER_H + 16}px` }}>
+          <table className="min-w-full border-collapse text-sm">
             <colgroup>
               {COL_WIDTHS.map((w, i) => (
                 <col key={i} style={{ width: w }} />
               ))}
             </colgroup>
-            <thead>
-              <tr className="h-11 bg-white/10 text-white/90">
+
+            {/* Sticky header inside the scroller */}
+            <thead className="sticky top-0 z-10 bg-[#303030]">
+              <tr className="h-11 text-white/90">
                 <th className="pr-2 pl-4 text-left font-medium"> </th>
                 <Th label="Token name" active={sort.key === 'symbol'} dir={sort.dir} />
                 <th> </th>
@@ -533,7 +534,7 @@ function ExplorePageInner() {
         </div>
       </div>
 
-      {/* Fixed footer */}
+      {/* Fixed footer (external fixed component) */}
       <FixedFooter
         index={index}
         total={total}
@@ -541,7 +542,7 @@ function ExplorePageInner() {
         loading={loading}
         onChange={(next) => setIndex(next)}
         onPageSizeChange={handlePageSizeChange}
-        currentCount={filtered.length} // ← add this
+        currentCount={filtered.length}
       />
 
       <Toast message="Address copied to clipboard" show={toast} onClose={() => setToast(false)} />
