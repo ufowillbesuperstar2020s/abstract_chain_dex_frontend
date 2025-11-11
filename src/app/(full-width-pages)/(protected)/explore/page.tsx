@@ -4,7 +4,7 @@ import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 // import { pickBasePerPair } from '@/utils/pickBasePerPair';
-import Toast from '@/components/ui/Toast';
+import Toast from '@/components/ui/toast/Toast';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { formatAgeShort } from '@/utils/formatAge';
 import { shortAddress } from '@/utils/shortAddress';

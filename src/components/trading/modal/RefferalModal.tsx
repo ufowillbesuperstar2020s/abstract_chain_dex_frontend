@@ -4,7 +4,7 @@ import React, { useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useAccount } from 'wagmi';
 import Image from 'next/image';
-import Toast from '@/components/ui/Toast';
+import Toast from '@/components/ui/toast/Toast';
 
 type Props = {
   open: boolean;

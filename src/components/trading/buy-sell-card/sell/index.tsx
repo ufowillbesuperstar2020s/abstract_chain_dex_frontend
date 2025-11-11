@@ -9,6 +9,7 @@ import { useAbstractClient } from '@abstract-foundation/agw-react';
 import { parseUnits, encodeFunctionData } from 'viem';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
+import { defaultExplorerBase, showTxToast } from '@/components/ui/toast/TxToast';
 
 const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/evm-chart-api/';
 
@@ -128,7 +129,17 @@ export default function Sell() {
             // Wait for wallet approval & submission (returns id / bundle hash)
             const sendResult = (await sendCallsAsync({ calls })) as unknown;
             const bundleId = getBundleId(sendResult);
-            showInfoAlert(bundleId);
+
+            const hash = typeof bundleId === 'string' ? bundleId : ((bundleId as any)?.hash ?? String(bundleId));
+
+            showTxToast({
+              kind: 'SELL',
+              title: 'SELL Success!',
+              hash: hash,
+              explorerBase: defaultExplorerBase(), // set via env or fallback
+              ttlMs: 10000
+            });
+
             return;
           }
 
@@ -138,7 +149,14 @@ export default function Sell() {
             data: approveData as `0x${string}`,
             value: BigInt(0)
           });
-          showInfoAlert(`Approve TX submitted:\n${JSON.stringify(approveReceipt)}`);
+
+          showTxToast({
+            kind: 'SELL',
+            title: 'Approve TX submitted:',
+            hash: JSON.stringify(approveReceipt),
+            explorerBase: defaultExplorerBase(), // set via env or fallback
+            ttlMs: 10000
+          });
 
           const swapValue = toBigIntOrUndefined(swap_tx.value);
 
@@ -148,7 +166,16 @@ export default function Sell() {
             value: swapValue
           });
 
-          showReceiptAlert(swapReceipt);
+          const hash =
+            typeof swapReceipt === 'string' ? swapReceipt : ((swapReceipt as any)?.hash ?? String(swapReceipt));
+
+          showTxToast({
+            kind: 'SELL',
+            title: 'Sell Success!',
+            hash,
+            explorerBase: defaultExplorerBase(), // set via env or fallback
+            ttlMs: 10000
+          });
         } catch (err) {
           if (axios.isAxiosError(err)) {
             console.error('Request failed:', err.response?.data ?? err.message);
@@ -159,52 +186,4 @@ export default function Sell() {
       }}
     />
   );
-}
-
-// ----- UI helpers -----
-function showReceiptAlert(receipt: string) {
-  const value = JSON.stringify(receipt, null, 2);
-  showAlert(value);
-}
-function showInfoAlert(message: string) {
-  showAlert(message);
-}
-function showAlert(value: string) {
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.top = '20px';
-  container.style.right = '20px';
-  container.style.padding = '12px';
-  container.style.background = 'white';
-  container.style.border = '1px solid #ccc';
-  container.style.borderRadius = '8px';
-  container.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-  container.style.zIndex = '9999';
-  container.style.fontFamily = 'monospace';
-  container.style.maxWidth = '520px';
-  container.style.whiteSpace = 'pre-wrap';
-
-  const text = document.createElement('span');
-  text.innerText = value;
-  container.appendChild(text);
-
-  const copyBtn = document.createElement('button');
-  copyBtn.innerText = 'Copy';
-  copyBtn.style.marginLeft = '10px';
-  copyBtn.onclick = () => {
-    navigator.clipboard.writeText(value);
-    copyBtn.innerText = 'Copied!';
-    setTimeout(() => (copyBtn.innerText = 'Copy'), 1500);
-  };
-  container.appendChild(copyBtn);
-
-  const closeBtn = document.createElement('span');
-  closeBtn.innerText = '✕';
-  closeBtn.style.marginLeft = '10px';
-  closeBtn.style.cursor = 'pointer';
-  const remove = () => container.remove();
-  closeBtn.onclick = remove;
-  container.appendChild(closeBtn);
-
-  document.body.appendChild(container);
 }

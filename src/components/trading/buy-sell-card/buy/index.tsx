@@ -7,6 +7,7 @@ import { useAccount, useSendTransaction } from 'wagmi';
 import { parseEther } from 'viem';
 import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
+import { defaultExplorerBase, showTxToast } from '@/components/ui/toast/TxToast';
 
 type AbstractSwapRequest = {
   wallet_address: string;
@@ -16,7 +17,7 @@ type AbstractSwapRequest = {
   slippage: number;
 };
 
-const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? '';
+const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/evm-chart-api/';
 
 export default function Buy() {
   const { address } = useAccount();
@@ -68,7 +69,14 @@ export default function Buy() {
               value: value,
               data: tx
             });
-            showReceiptAlert(receipt);
+            const hash = typeof receipt === 'string' ? receipt : ((receipt as any)?.hash ?? String(receipt));
+            showTxToast({
+              kind: 'BUY',
+              title: 'Buy Success!',
+              hash,
+              explorerBase: defaultExplorerBase(), // set via env or fallback
+              ttlMs: 10000
+            });
           }
         } catch (err) {
           if (axios.isAxiosError(err)) {
@@ -80,49 +88,4 @@ export default function Buy() {
       }}
     />
   );
-}
-
-// Simple alert with receipt value and copy button
-function showReceiptAlert(receipt: string) {
-  const value = typeof receipt === 'string' ? receipt : JSON.stringify(receipt);
-
-  // Create alert container
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.top = '20px';
-  container.style.right = '20px';
-  container.style.padding = '12px';
-  container.style.background = 'white';
-  container.style.border = '1px solid #ccc';
-  container.style.borderRadius = '8px';
-  container.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-  container.style.zIndex = '9999';
-  container.style.fontFamily = 'monospace';
-
-  // Receipt text
-  const text = document.createElement('span');
-  text.innerText = value;
-  container.appendChild(text);
-
-  // Copy button
-  const copyBtn = document.createElement('button');
-  copyBtn.innerText = 'Copy';
-  copyBtn.style.marginLeft = '10px';
-  copyBtn.onclick = () => {
-    navigator.clipboard.writeText(value);
-    copyBtn.innerText = 'Copied!';
-    setTimeout(() => (copyBtn.innerText = 'Copy'), 1500);
-  };
-  container.appendChild(copyBtn);
-
-  // Close button
-  const closeBtn = document.createElement('span');
-  closeBtn.innerText = '✕';
-  closeBtn.style.marginLeft = '10px';
-  closeBtn.style.cursor = 'pointer';
-  closeBtn.onclick = () => container.remove();
-  container.appendChild(closeBtn);
-
-  // Add to DOM
-  document.body.appendChild(container);
 }
