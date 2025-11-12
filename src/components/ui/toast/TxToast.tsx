@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 
@@ -38,7 +38,7 @@ function clsFor(kind: Kind) {
 }
 
 export function showTxToast(payload: TxToastPayload) {
-  const event = new CustomEvent<Item>(EVENT_NAME as any, {
+  const event = new CustomEvent<Item>(EVENT_NAME, {
     detail: { id: crypto.randomUUID(), ...payload }
   });
   window.dispatchEvent(event);
