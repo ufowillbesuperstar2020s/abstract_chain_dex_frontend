@@ -8,6 +8,7 @@ import { parseEther } from 'viem';
 import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { defaultExplorerBase, showTxToast } from '@/components/ui/toast/TxToast';
+import type { Address, Hash, Hex } from 'viem';
 
 type AbstractSwapRequest = {
   wallet_address: string;
@@ -61,20 +62,21 @@ export default function Buy() {
           const swap_tx = res.data.txs?.swap;
 
           if (swap_tx) {
-            const tx = swap_tx.input;
-            const value = BigInt(swap_tx.value ?? 0);
-            const to = swap_tx.to;
-            const receipt = await sendTransactionAsync({
-              to: to,
-              value: value,
-              data: tx
+            const to: Address = swap_tx.to as Address;
+            const data: Hex = swap_tx.input as Hex;
+            const value = swap_tx.value ? BigInt(swap_tx.value) : undefined;
+
+            const hash: Hash = await sendTransactionAsync({
+              to,
+              value,
+              data
             });
-            const hash = typeof receipt === 'string' ? receipt : ((receipt as any)?.hash ?? String(receipt));
+
             showTxToast({
               kind: 'BUY',
               title: 'Buy Success!',
               hash,
-              explorerBase: defaultExplorerBase(), // set via env or fallback
+              explorerBase: defaultExplorerBase(),
               ttlMs: 10000
             });
           }

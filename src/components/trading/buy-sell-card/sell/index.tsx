@@ -10,6 +10,7 @@ import { parseUnits, encodeFunctionData } from 'viem';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
 import { defaultExplorerBase, showTxToast } from '@/components/ui/toast/TxToast';
+import type { Address, Hash, Hex } from 'viem';
 
 const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/evm-chart-api/';
 
@@ -127,19 +128,16 @@ export default function Sell() {
             ];
 
             // Wait for wallet approval & submission (returns id / bundle hash)
-            const sendResult = (await sendCallsAsync({ calls })) as unknown;
-            const bundleId = getBundleId(sendResult);
-
-            const hash = typeof bundleId === 'string' ? bundleId : ((bundleId as any)?.hash ?? String(bundleId));
+            const sendResult = await sendCallsAsync({ calls });
+            const bundleId = getBundleId(sendResult); // type: `0x${string}`
 
             showTxToast({
               kind: 'SELL',
               title: 'SELL Success!',
-              hash: hash,
-              explorerBase: defaultExplorerBase(), // set via env or fallback
+              hash: bundleId,
+              explorerBase: defaultExplorerBase(),
               ttlMs: 10000
             });
-
             return;
           }
 
@@ -160,20 +158,17 @@ export default function Sell() {
 
           const swapValue = toBigIntOrUndefined(swap_tx.value);
 
-          const swapReceipt = await sendTransactionAsync({
-            to: swap_tx.to,
-            data: swap_tx.input,
-            value: swapValue
+          const swapHash: Hash = await sendTransactionAsync({
+            to: swap_tx.to as Address,
+            data: swap_tx.input as Hex,
+            value: swapValue // bigint | undefined
           });
-
-          const hash =
-            typeof swapReceipt === 'string' ? swapReceipt : ((swapReceipt as any)?.hash ?? String(swapReceipt));
 
           showTxToast({
             kind: 'SELL',
             title: 'Sell Success!',
-            hash,
-            explorerBase: defaultExplorerBase(), // set via env or fallback
+            hash: swapHash,
+            explorerBase: defaultExplorerBase(),
             ttlMs: 10000
           });
         } catch (err) {
