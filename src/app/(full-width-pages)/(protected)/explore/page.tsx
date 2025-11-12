@@ -12,9 +12,10 @@ import { fmtUSD } from '@/utils/fmtUSD';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
-// ========= layout constants (tweak to your app) =========
-const APP_HEADER_H = 72; // px — height of your global fixed header
-const FOOTER_H = 64; // px — height of your FixedFooter
+// ========= layout constants =========
+const APP_HEADER_H = 72; // px — height of the global fixed header
+const FOOTER_H = 72; // px — height of the FixedFooter
+const FOOTER_SAFE = FOOTER_H + 28;
 
 // ---------- types from UI ----------
 type TimeRange = '1h' | '4h' | '12h' | '24h';
@@ -124,6 +125,7 @@ function ExplorePageInner() {
 
   const DEFAULT_SORT: Sort = { key: 'liquidityUsd', dir: 'desc' };
 
+  // Keep header/body columns perfectly aligned
   const COL_WIDTHS = ['3%', '20%', '9%', '10%', '10%', '10%', '10%', '10%', '10%', '10%'];
 
   const handlePageSizeChange = (newLimit: number) => {
@@ -151,10 +153,7 @@ function ExplorePageInner() {
     const volume24hTokens = toNum(p._24h_volume) / denom;
     const volume24hUsd = volume24hTokens * priceUsd;
 
-    // const liquidityUsd = (toNum(p.liquidity) / denom) * priceUsd;
     const liquidityUsd = toNum(p.liquidity) / denom;
-
-    // const marketcapUsd = (toNum(p.market_cap) / denom) * priceUsd;
     const marketcapUsd = toNum(p.market_cap) / denom;
 
     return {
@@ -164,7 +163,7 @@ function ExplorePageInner() {
       name: p.token_name || '—',
       ageSeconds,
       ageLabel: formatAgeShort(ageSeconds),
-      priceUsd: toNum(p.usd_price),
+      priceUsd,
       change1hPct: toNum(p._1h_change),
       change12hPct: toNum(p._12h_change),
       change24hPct: toNum(p._24h_change),
@@ -271,7 +270,7 @@ function ExplorePageInner() {
     <div
       className="fixed inset-x-0 bottom-0 mx-auto w-full px-10"
       style={{
-        top: `${APP_HEADER_H}px`, // sits exactly below your global header
+        top: `${APP_HEADER_H}px`,
         display: 'flex',
         flexDirection: 'column',
         gap: '0.75rem',
@@ -367,79 +366,71 @@ function ExplorePageInner() {
         </div>
       </div>
 
-      {/* Table area (only this scrolls) */}
+      {/* Table card: header (static) + body (scroll only here) */}
       <div className="min-h-0 flex-1 overflow-hidden rounded-2xl">
-        {/* The ONLY vertical scroller */}
-        <div className="h-full overflow-x-auto overflow-y-auto" style={{ paddingBottom: `${FOOTER_H + 16}px` }}>
+        {/* HEADER TABLE (not scrollable) */}
+        <div className="overflow-hidden">
           <table className="min-w-full border-collapse text-sm">
             <colgroup>
               {COL_WIDTHS.map((w, i) => (
-                <col key={i} style={{ width: w }} />
+                <col key={`h-${i}`} style={{ width: w }} />
               ))}
             </colgroup>
-
-            {/* Sticky header inside the scroller */}
-            <thead className="sticky top-0 z-10 bg-[#303030]">
+            <thead className="bg-[#303030]">
               <tr className="h-11 text-white/90">
                 <th className="pr-2 pl-4 text-left font-medium"> </th>
-                <Th label="Token name" active={sort.key === 'symbol'} dir={sort.dir} />
+                <Th label="Token name" active={sort.key === 'symbol'} />
                 <th> </th>
-                <Th
-                  label="Price"
-                  onClick={() => setSortKey('priceUsd')}
-                  active={sort.key === 'priceUsd'}
-                  dir={sort.dir}
-                />
-                <Th
-                  label="1h change"
-                  onClick={() => setSortKey('change1hPct')}
-                  active={sort.key === 'change1hPct'}
-                  dir={sort.dir}
-                />
+                <Th label="Price" onClick={() => setSortKey('priceUsd')} active={sort.key === 'priceUsd'} />
+                <Th label="1h change" onClick={() => setSortKey('change1hPct')} active={sort.key === 'change1hPct'} />
                 <Th
                   label="12h change"
                   onClick={() => setSortKey('change12hPct')}
                   active={sort.key === 'change12hPct'}
-                  dir={sort.dir}
                 />
                 <Th
                   label="24h change"
                   onClick={() => setSortKey('change24hPct')}
                   active={sort.key === 'change24hPct'}
-                  dir={sort.dir}
                 />
                 <Th
                   label="24h volume"
                   onClick={() => setSortKey('volume24hUsd')}
                   active={sort.key === 'volume24hUsd'}
-                  dir={sort.dir}
                 />
-                <Th
-                  label="Liquidity"
-                  onClick={() => setSortKey('liquidityUsd')}
-                  active={sort.key === 'liquidityUsd'}
-                  dir={sort.dir}
-                />
-                <Th
-                  label="MC"
-                  onClick={() => setSortKey('marketcapUsd')}
-                  active={sort.key === 'marketcapUsd'}
-                  dir={sort.dir}
-                />
+                <Th label="Liquidity" onClick={() => setSortKey('liquidityUsd')} active={sort.key === 'liquidityUsd'} />
+                <Th label="MC" onClick={() => setSortKey('marketcapUsd')} active={sort.key === 'marketcapUsd'} />
               </tr>
             </thead>
+          </table>
+        </div>
+
+        {/* BODY TABLE (the ONLY scroller -> scrollbar shows only beside rows) */}
+        <div
+          className="pretty-scroll overflow-x-auto overflow-y-auto"
+          style={{
+            height: `calc(100% - ${FOOTER_SAFE}px)`, // shorten the scrollable area
+            paddingBottom: 8 // a little inner space for the last row
+          }}
+        >
+          <table className="min-w-full border-collapse text-sm">
+            <colgroup>
+              {COL_WIDTHS.map((w, i) => (
+                <col key={`b-${i}`} style={{ width: w }} />
+              ))}
+            </colgroup>
 
             <tbody className="divide-y divide-white/5">
               {loading && (
                 <tr>
-                  <td colSpan={9} className="p-6 text-center text-white/60">
+                  <td colSpan={10} className="p-6 text-center text-white/60">
                     Loading pairs…
                   </td>
                 </tr>
               )}
               {error && !loading && (
                 <tr>
-                  <td colSpan={9} className="p-6 text-center text-red-400">
+                  <td colSpan={10} className="p-6 text-center text-red-400">
                     Failed to load: {error}
                   </td>
                 </tr>
@@ -503,6 +494,7 @@ function ExplorePageInner() {
                       </a>
                     </td>
 
+                    {/* age pill */}
                     <td className="w-8 pr-1 pl-3">
                       <span className="inline-flex w-15 items-center justify-center rounded-xl bg-emerald-600/20 py-0.5 text-xs text-white">
                         <Image
@@ -566,7 +558,7 @@ function Th({
         {label === 'Token name' && <Image width={15} height={15} src="/images/icons/token.svg" alt="Token" />}
         {label}
         <button onClick={onClick} className={cx(active ? 'text-white' : 'text-white/60 hover:text-white/80')}>
-          {['Price', 'Liquidity', 'MC'].includes(label) && (
+          {['Price', 'Liquidity', 'MC', '1h change', '12h change', '24h change', '24h volume'].includes(label) && (
             <Image width={15} height={15} src="/images/icons/sort.svg" alt="Sort" />
           )}
         </button>

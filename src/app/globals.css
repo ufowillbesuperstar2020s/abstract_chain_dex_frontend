@@ -942,3 +942,49 @@ pre[class*='language-'].line-numbers {
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome/Safari/Edge (Blink/WebKit) */
 }
+
+/* ---- Smart, minimal dark scrollbar ---- */
+:root {
+  --sb-thumb: #3a3f46; /* thumb base */
+  --sb-thumb-hover: #4a525d; /* thumb on hover */
+  --sb-track: rgba(255, 255, 255, 0.06); /* subtle rail */
+}
+
+/* Prevent layout shift when the scrollbar appears */
+.pretty-scroll {
+  scrollbar-gutter: stable; /* Chromium/Firefox */
+}
+
+/* Firefox */
+.pretty-scroll {
+  scrollbar-width: thin; /* thin rail */
+  scrollbar-color: var(--sb-thumb) transparent;
+}
+
+/* WebKit (Chrome/Edge/Safari) */
+.pretty-scroll::-webkit-scrollbar {
+  width: 10px; /* vertical */
+  height: 10px; /* horizontal */
+}
+
+.pretty-scroll::-webkit-scrollbar-track {
+  background: transparent; /* keep rail subtle */
+  border-radius: 999px;
+}
+
+.pretty-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--sb-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Hover: slightly brighter thumb */
+.pretty-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: var(--sb-thumb-hover);
+}
+
+/* Corner between vertical & horizontal bars */
+.pretty-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
