@@ -9,24 +9,38 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai
 
 type Quote = 'USD' | 'WETH';
 
-type TradeWindowKey = '_1h' | '_12h' | '_1d';
+// matches backend: we now have _1h, _4h, _12h, _1d
+type TradeWindowKey = '_1h' | '_4h' | '_12h' | '_1d';
 
 type TradeWindow = {
+  buy_count?: string | number;
+  sell_count?: string | number;
   buy_vol?: string;
   sell_vol?: string;
+  // prices exist too, not use them here
+  close_price?: string;
+  high_price?: string;
+  low_price?: string;
+  open_price?: string;
+  trades_count?: string | number;
 };
 
 type MarketApiToken = {
+  created_at?: string;
+  dev_holders_remaining?: string;
+  holders_count?: string | number;
+  liquidity?: string;
+  migrate?: string;
+  price?: string;
+  snipers_remaining?: string;
+  top_holders_remaining?: string;
+  total_supply?: string;
+  weth_usd_price?: string;
   buy_count?: number;
   sell_count?: number;
   buy_volume?: string;
   sell_volume?: string;
-  holders_count?: number;
-  liquidity?: string;
-  price?: string;
-  total_supply?: string;
   tx_count?: number;
-  weth_usd_price?: string;
 };
 
 type MarketApiTrade = Partial<Record<TradeWindowKey, TradeWindow>>;
@@ -42,8 +56,8 @@ export type TokenMetrics = {
   supplyHuman: number | null;
   buyCount?: number | null;
   sellCount?: number | null;
-  buyVolumeRaw?: string | null; // all-time, base units
-  sellVolumeRaw?: string | null; // all-time, base units
+  buyVolumeRaw?: string | null; // base units
+  sellVolumeRaw?: string | null; // base units
   trade?: MarketApiTrade | null;
 };
 
@@ -155,7 +169,6 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
       const totalSupplyRaw = t.total_supply ?? null;
 
       let usdPrice: number | null = null;
-
       usdPrice = priceRaw;
 
       let supplyHuman: number | null = null;
@@ -165,14 +178,39 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
           (Number.isFinite(asNum) ? asNum : Number(parseFloat(String(totalSupplyRaw)))) / Math.pow(10, decimals);
       }
 
+      let buyCount: number | null = null;
+      let sellCount: number | null = null;
+      let buyVolumeRaw: string | null = null;
+      let sellVolumeRaw: string | null = null;
+
+      if (trade) {
+        const preferredOrder: TradeWindowKey[] = ['_1h', '_4h', '_12h', '_1d'];
+        let window: TradeWindow | undefined;
+
+        for (const key of preferredOrder) {
+          const candidate = trade[key];
+          if (candidate) {
+            window = candidate;
+            break;
+          }
+        }
+
+        if (window) {
+          buyCount = toNum(window.buy_count) ?? 0;
+          sellCount = toNum(window.sell_count) ?? 0;
+          buyVolumeRaw = window.buy_vol ?? null;
+          sellVolumeRaw = window.sell_vol ?? null;
+        }
+      }
+
       const metrics = {
         usdPrice,
         liquidityUsd,
         supplyHuman,
-        buyCount: t.buy_count ?? null,
-        sellCount: t.sell_count ?? null,
-        buyVolumeRaw: t.buy_volume ?? null,
-        sellVolumeRaw: t.sell_volume ?? null,
+        buyCount,
+        sellCount,
+        buyVolumeRaw,
+        sellVolumeRaw,
         trade
       };
 
