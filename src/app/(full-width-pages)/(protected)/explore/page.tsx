@@ -169,7 +169,7 @@ function ExplorePageInner() {
         token1_address: p.token1_address,
         chain_id: p.chain_id
       }),
-      iconUrl: '/images/icons/logo_pepe_frog.png', //p.token_logo_url ||
+      iconUrl: '/images/error/question_mark.png',
       symbol: p.token_symbol || '—',
       name: p.token_name || '—',
       ageSeconds,
@@ -508,7 +508,7 @@ function ExplorePageInner() {
                             <span className="max-w-[220px] truncate text-sm text-white/60">{t.name}</span>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-white/50">
-                            <span className="max-w-[220px]">{shortAddress(t.pair_address)}</span>
+                            <span className="max-w-[220px]">{shortAddress(t.token_address)}</span>
                             <button
                               aria-label="Copy pair address"
                               title="Copy address"

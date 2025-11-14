@@ -27,7 +27,7 @@ function chunk<T>(arr: T[], size: number): T[][] {
 
 /**
  * Fetch logos from DexScreener by token addresses (max 30 per request).
- * Uses browser fetch, no backend.
+ * Uses browser fetch
  */
 async function fetchDexLogosRaw(addresses: string[]): Promise<DexLogoMap> {
   const unique = Array.from(new Set(addresses.map((a) => a.toLowerCase())));
@@ -56,7 +56,7 @@ async function fetchDexLogosRaw(addresses: string[]): Promise<DexLogoMap> {
       }
     } catch (e) {
       console.warn('DexScreener logo fetch error:', e);
-      // continue, we don't want to break the page
+      // continue, don't want to break the page
     }
   }
 

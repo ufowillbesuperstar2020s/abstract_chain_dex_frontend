@@ -26,8 +26,10 @@ export function normalize(addr?: string | null): string {
 const DEFAULT_QUOTES: Record<number, string[]> = {
   // Abstract mainnet (per your data): WETH, USDC
   2741: [
-    '0x3439153eb7af838ad19d56e1571fbd09333c2809', // WETH
-    '0x34cccd4508458e0dbdbfa291a77673e4636e9b54' // USDC : !!! not confirmed !!!
+    '0x3439153eb7af838ad19d56e1571fbd09333c2809',
+    '0x84a71ccd554cc1b02749b35d22f684cc8ec987e1', // WETH
+    '0x34cccd4508458e0dbdbfa291a77673e4636e9b54', // USDC
+    '0x0709f39376deee2a2dfc94a58edeb2eb9df012bd' // USDT
   ]
 };
 
