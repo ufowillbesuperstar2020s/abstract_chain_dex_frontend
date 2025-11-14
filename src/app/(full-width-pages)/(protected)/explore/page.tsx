@@ -200,12 +200,7 @@ function ExplorePageInner() {
       const json: ApiResp = await res.json();
       setTotal(json?.total ?? 0);
       const mapped = json.pairs.map(mapPair);
-
-      console.log('wang_mapped', mapped);
-
       const addrs = mapped.map((r) => r.token_address).filter((a) => !!a);
-
-      console.log('wang_addrs', addrs);
 
       let rowsWithLogos = mapped;
 
@@ -508,7 +503,7 @@ function ExplorePageInner() {
                             <span className="max-w-[220px] truncate text-sm text-white/60">{t.name}</span>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-white/50">
-                            <span className="max-w-[220px]">{shortAddress(t.token_address)}</span>
+                            <span className="max-w-[220px]">{shortAddress(t.pair_address)}</span>
                             <button
                               aria-label="Copy pair address"
                               title="Copy address"
