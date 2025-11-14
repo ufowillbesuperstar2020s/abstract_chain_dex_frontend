@@ -118,7 +118,7 @@ function ExplorePageInner() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [index, setIndex] = React.useState(0);
-  const [limit, setLimit] = React.useState(50);
+  const [limit, setLimit] = React.useState(30);
   const [total, setTotal] = React.useState(0);
 
   const [toast, setToast] = React.useState(false);
