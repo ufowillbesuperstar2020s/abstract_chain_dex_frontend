@@ -9,6 +9,8 @@ import { formatAgeShort } from '@/utils/formatAge';
 import { shortAddress } from '@/utils/shortAddress';
 import FixedFooter from '@/components/explore/FixedFooter';
 import { fmtUSD } from '@/utils/fmtUSD';
+import { getDexLogosForTokens } from '@/utils/token_logo/dexScreenerLogos';
+import { getTokenAddress } from '@/utils/getTokenAddress';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
@@ -22,6 +24,7 @@ type TimeRange = '1h' | '4h' | '12h' | '24h';
 
 type TokenRow = {
   pair_address: string;
+  token_address: string;
   iconUrl: string;
   symbol: string;
   name: string;
@@ -47,6 +50,9 @@ type ApiPair = {
   liquidity: string;
   market_cap: string;
   pair_address: string;
+  token0_address: string;
+  token1_address: string;
+  chain_id: number;
   token_logo_url: string;
   token_name: string;
   token_symbol: string;
@@ -158,7 +164,12 @@ function ExplorePageInner() {
 
     return {
       pair_address: p.pair_address,
-      iconUrl: p.token_logo_url || '/images/icons/bela_token.svg',
+      token_address: getTokenAddress({
+        token0_address: p.token0_address,
+        token1_address: p.token1_address,
+        chain_id: p.chain_id
+      }),
+      iconUrl: '/images/icons/logo_pepe_frog.png', //p.token_logo_url ||
       symbol: p.token_symbol || '—',
       name: p.token_name || '—',
       ageSeconds,
@@ -189,7 +200,29 @@ function ExplorePageInner() {
       const json: ApiResp = await res.json();
       setTotal(json?.total ?? 0);
       const mapped = json.pairs.map(mapPair);
-      setRows(mapped);
+
+      console.log('wang_mapped', mapped);
+
+      const addrs = mapped.map((r) => r.token_address).filter((a) => !!a);
+
+      console.log('wang_addrs', addrs);
+
+      let rowsWithLogos = mapped;
+
+      if (addrs.length > 0) {
+        try {
+          const logoMap = await getDexLogosForTokens(addrs);
+          rowsWithLogos = mapped.map((row) => {
+            const logo = logoMap[row.token_address.toLowerCase()];
+            return logo ? { ...row, iconUrl: logo } : row; // fallback to default icon
+          });
+        } catch (e) {
+          console.warn('Failed to fetch Dex logos, using default icons only', e);
+          // rowsWithLogos stays = mapped (default icons)
+        }
+      }
+
+      setRows(rowsWithLogos);
     } catch (e: unknown) {
       setError((e as Error)?.message ?? 'Failed to load');
       setRows([]);
