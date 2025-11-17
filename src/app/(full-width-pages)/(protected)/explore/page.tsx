@@ -11,6 +11,8 @@ import FixedFooter from '@/components/explore/FixedFooter';
 import { fmtUSD } from '@/utils/fmtUSD';
 import { getDexLogosForTokens } from '@/utils/token_logo/dexScreenerLogos';
 import { getTokenAddress } from '@/utils/getTokenAddress';
+import PairFiltersDrawer from '@/components/explore/PairFiltersDrawer';
+import { PairFilters, emptyPairFilters, buildPairFiltersQuery, countActiveFilters } from '@/utils/pairFilters';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
@@ -128,6 +130,15 @@ function ExplorePageInner() {
   const [total, setTotal] = React.useState(0);
 
   const [toast, setToast] = React.useState(false);
+  const [filtersOpen, setFiltersOpen] = React.useState(false);
+
+  // filters actually applied to the API request
+  const [filters, setFilters] = React.useState<PairFilters>(emptyPairFilters);
+
+  // local editable draft used inside the drawer, only committed on "Apply"
+  const [filterDraft, setFilterDraft] = React.useState<PairFilters>(emptyPairFilters);
+
+  const activeFilterCount = React.useMemo(() => countActiveFilters(filters), [filters]);
 
   const DEFAULT_SORT: Sort = { key: 'liquidityUsd', dir: 'desc' };
 
@@ -148,6 +159,29 @@ function ExplorePageInner() {
 
   const handleNewToggle = () => {
     setSort((s) => (s.key === 'ageSeconds' && s.dir === 'asc' ? DEFAULT_SORT : { key: 'ageSeconds', dir: 'asc' }));
+  };
+
+  const handleToggleFilters = () => {
+    setFiltersOpen((open) => {
+      const next = !open;
+      if (!open) {
+        // opening -> sync draft with currently applied filters
+        setFilterDraft(filters);
+      }
+      return next;
+    });
+  };
+
+  const handleApplyFilters = () => {
+    setFilters(filterDraft);
+    setIndex(0); // reset pagination when filters change
+    setFiltersOpen(false);
+  };
+
+  const handleResetFilters = () => {
+    setFilters(emptyPairFilters);
+    setFilterDraft(emptyPairFilters);
+    setIndex(0);
   };
 
   // map API -> UI row
@@ -192,7 +226,11 @@ function ExplorePageInner() {
       setError(null);
 
       const resolution = RESOLUTION_FOR[timeRange] ?? '24h';
-      const url = `${API_BASE}/api/info/pair/list?chain_id=2741&resolution=${resolution}&index=${index}&limit=${limit}&order_by=liquidity desc`;
+
+      let url = `${API_BASE}/api/info/pair/list?chain_id=2741&resolution=${resolution}&index=${index}&limit=${limit}&order_by=liquidity desc`;
+
+      // append filter parameters
+      url += buildPairFiltersQuery(filters);
 
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -213,7 +251,6 @@ function ExplorePageInner() {
           });
         } catch (e) {
           console.warn('Failed to fetch Dex logos, using default icons only', e);
-          // rowsWithLogos stays = mapped (default icons)
         }
       }
 
@@ -224,7 +261,7 @@ function ExplorePageInner() {
     } finally {
       setLoading(false);
     }
-  }, [timeRange, index, limit]);
+  }, [timeRange, index, limit, filters]);
 
   React.useEffect(() => {
     fetchPairs();
@@ -385,11 +422,14 @@ function ExplorePageInner() {
         {/* search + filters */}
         <div className="flex items-center gap-3">
           <button
+            type="button"
+            onClick={handleToggleFilters}
             className="hidden h-10 items-center gap-2 rounded-md px-3 text-sm text-white/80 hover:bg-white/15 md:inline-flex"
             title="Filters"
           >
-            <Image width={15} height={15} src="/images/icons/filters.svg" alt="User" />
-            Filters <span className="text-emerald-500">(5)</span>
+            <Image width={15} height={15} src="/images/icons/filters.svg" alt="Filters" />
+            Filters
+            {activeFilterCount > 0 && <span className="text-emerald-500">({activeFilterCount})</span>}
           </button>
         </div>
       </div>
@@ -453,6 +493,13 @@ function ExplorePageInner() {
                 <tr>
                   <td colSpan={10} className="p-6 text-center text-white/60">
                     Loading pairs…
+                  </td>
+                </tr>
+              )}
+              {!loading && !error && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="p-6 text-center text-white/60">
+                    No items
                   </td>
                 </tr>
               )}
@@ -553,6 +600,16 @@ function ExplorePageInner() {
           </table>
         </div>
       </div>
+
+      {/* Right-side filter drawer */}
+      <PairFiltersDrawer
+        open={filtersOpen}
+        draft={filterDraft}
+        onChangeDraft={setFilterDraft}
+        onClose={() => setFiltersOpen(false)}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      />
 
       {/* Fixed footer (external fixed component) */}
       <FixedFooter
