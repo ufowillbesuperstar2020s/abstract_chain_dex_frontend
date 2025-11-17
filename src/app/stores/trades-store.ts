@@ -28,6 +28,9 @@ type Actions = {
    */
   fetchPage: (pair: string, index: number, limit?: number) => Promise<number>;
 
+  /** Push new live trades to the *top* of the list (websocket). */
+  prependTrades: (pair: string, items: Transaction | Transaction[]) => void;
+
   /** Alias so components can call either name */
   fetchTradesPaged: (pair: string, index: number, limit?: number) => Promise<number>;
 
@@ -72,6 +75,34 @@ export const useTradesStore = create<State & Actions>((set, get) => ({
       // clear loading
       set((s) => ({ loadingByPair: { ...s.loadingByPair, [pair]: false } }));
     }
+  },
+
+  prependTrades: (pair, items) => {
+    const list = Array.isArray(items) ? items : [items];
+    if (!list.length) return;
+
+    set((s) => {
+      const prev = s.tradesByPair[pair] ?? [];
+
+      const existing = new Set(prev.map((t) => t.tx_hash));
+      const fresh = list.filter((t) => !existing.has(t.tx_hash));
+
+      if (!fresh.length) {
+        // nothing new
+        return s;
+      }
+
+      // newest first (WS normally sends newest first)
+      const merged = [...fresh, ...prev];
+
+      // hard limit to avoid huge memory
+      const MAX_ROWS = 1000;
+      const trimmed = merged.slice(0, MAX_ROWS);
+
+      return {
+        tradesByPair: { ...s.tradesByPair, [pair]: trimmed }
+      };
+    });
   },
 
   // simple alias

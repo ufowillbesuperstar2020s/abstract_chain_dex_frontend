@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useTradesStore } from '@/app/stores/trades-store';
 import Spinner from '@/components/ui/Spinner';
 import PositionsTable from '@/components/trading/PositionsTable';
+import { subscribeTradesStream } from '@/utils/trades-stream';
+import type { Transaction } from '@/types/trades';
 
 interface Props {
   pairAddress: string;
@@ -46,6 +48,9 @@ export default function TransactionTable({ pairAddress }: Props) {
   const fetchAPI = useTradesStore((s) => s.fetchTrades);
   const fetchTradesPaged: undefined | ((pair: string, index: number, limit?: number) => Promise<number>) =
     useTradesStore((s) => s.fetchTradesPaged);
+  const prependTrades = useTradesStore((s) => s.prependTrades);
+
+  const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://160.202.131.23:8083';
 
   // ---- local ticking for Age mode
   const [, forceTick] = React.useState(0);
@@ -165,6 +170,48 @@ export default function TransactionTable({ pairAddress }: Props) {
       mounted = false;
     };
   }, [pairAddress]);
+
+  useEffect(() => {
+    if (!pairAddress) return;
+
+    const makeSubscribeMsg = (address: string) => ({
+      type: 'SUBSCRIBE_TX',
+      data: { pair_address: address }
+    });
+
+    const makeUnsubscribeMsg = (address: string) => ({
+      type: 'SUBSCRIBE_TX',
+      data: { pair_address: address }
+    });
+
+    const unsubscribe = subscribeTradesStream({
+      wsUrl: WS_URL,
+      pairAddress,
+      makeSubscribeMsg,
+      makeUnsubscribeMsg,
+      onMessage: (msgData) => {
+        const tx: Transaction = {
+          pair_address: msgData.pair_address,
+          tx_type: msgData.tx_type ?? 'swap',
+          price_native: msgData.price_native,
+          price_usd: msgData.price_usd,
+          amount: msgData.amount,
+          decimals: msgData.decimals,
+          wallet_address: msgData.wallet_address,
+          tx_hash: msgData.tx_hash,
+          block_number: msgData.block_number,
+          timestamp: msgData.timestamp
+        };
+
+        // push into Zustand store (prepend)
+        prependTrades(pairAddress, tx);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [pairAddress, prependTrades]);
 
   // Load next page at bottom
   const loadMore = useCallback(async () => {
