@@ -12,7 +12,7 @@ import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
 import { defaultExplorerBase, showTxToast } from '@/components/ui/toast/TxToast';
 import type { Address, Hash, Hex } from 'viem';
 
-const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/evm-chart-api/';
+const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/abs-swap-api';
 
 // Minimal ABI (approve + decimals)
 const erc20Abi = [

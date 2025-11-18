@@ -18,7 +18,7 @@ type AbstractSwapRequest = {
   slippage: number;
 };
 
-const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/evm-chart-api/';
+const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/abs-swap-api';
 
 export default function Buy() {
   const { address } = useAccount();
