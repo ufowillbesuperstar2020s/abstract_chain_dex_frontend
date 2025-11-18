@@ -184,7 +184,7 @@ export default function TransactionTable({ pairAddress }: Props) {
       data: { pair_address: address }
     });
 
-    const unsubscribe = subscribeTradesStream({
+    const unsubscribe = subscribeTradesStream<unknown, unknown, Transaction>({
       wsUrl: WS_URL,
       pairAddress,
       makeSubscribeMsg,
@@ -202,8 +202,6 @@ export default function TransactionTable({ pairAddress }: Props) {
           block_number: msgData.block_number,
           timestamp: msgData.timestamp
         };
-
-        // push into Zustand store (prepend)
         prependTrades(pairAddress, tx);
       }
     });

@@ -1,9 +1,9 @@
-type SubscribeOptions = {
+type SubscribeOptions<TSubMsg = unknown, TUnsubMsg = unknown, TMsg = unknown> = {
   wsUrl: string;
   pairAddress: string;
-  makeSubscribeMsg: (address: string) => any;
-  makeUnsubscribeMsg?: (address: string) => any;
-  onMessage: (msgData: any) => void;
+  makeSubscribeMsg: (address: string) => TSubMsg;
+  makeUnsubscribeMsg?: (address: string) => TUnsubMsg;
+  onMessage: (msgData: TMsg) => void;
 };
 
 // keep one socket per wsUrl
@@ -25,7 +25,9 @@ function getSocket(wsUrl: string): WebSocket {
  * Subscribe trades stream for one pair.
  * Returns unsubscribe function.
  */
-export function subscribeTradesStream(opts: SubscribeOptions): () => void {
+export function subscribeTradesStream<TSubMsg = unknown, TUnsubMsg = unknown, TMsg = unknown>(
+  opts: SubscribeOptions<TSubMsg, TUnsubMsg, TMsg>
+): () => void {
   const { wsUrl, pairAddress, makeSubscribeMsg, makeUnsubscribeMsg, onMessage } = opts;
 
   const socket = getSocket(wsUrl);
