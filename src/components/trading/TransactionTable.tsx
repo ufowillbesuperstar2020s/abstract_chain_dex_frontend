@@ -264,14 +264,16 @@ export default function TransactionTable({ pairAddress }: Props) {
       wallet: '0x75Ff...84901',
       amount: '8,500,000 BELA',
       balance: '8.50%',
-      value: '$1,275,000'
+      value: '$1,275,000',
+      last_activity_time: '05-17-2025  |  18:21:53'
     },
     {
       rank: 2,
       wallet: '0x9D23...ACc1E',
       amount: '5,210,000 BELA',
       balance: '5.21%',
-      value: '$795,000'
+      value: '$795,000',
+      last_activity_time: '05-17-2025  |  20:20:23'
     }
   ];
 

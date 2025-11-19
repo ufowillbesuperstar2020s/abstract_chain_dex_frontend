@@ -7,6 +7,7 @@ type Holder = {
   amount: string;
   balance: string;
   value: string;
+  last_activity_time: string;
 };
 
 interface Props {
@@ -15,14 +16,15 @@ interface Props {
 
 const HoldersTable: React.FC<Props> = ({ holders }) => {
   return (
-    <table className="w-full text-sm">
+    <table className="w-full table-fixed text-sm">
       <thead>
         <tr className="border-b border-white/10 text-white/40">
-          <th className="py-3 text-left">Rank</th>
-          <th className="py-3 text-left">Holder</th>
-          <th className="py-3 text-right">Amount</th>
-          <th className="py-3 text-right">Balance (%)</th>
-          <th className="py-3 text-right">Value</th>
+          <th className="w-[80px] py-3 text-left">Rank</th>
+          <th className="w-auto py-3 text-left">Holder</th>
+          <th className="py-3 text-left">Amount</th>
+          <th className="py-3 text-left">Balance (%)</th>
+          <th className="py-3 text-left">Value</th>
+          <th className="py-3 text-left">Activity (Last Seen)</th>
         </tr>
       </thead>
 
@@ -43,9 +45,10 @@ const HoldersTable: React.FC<Props> = ({ holders }) => {
               <span className="text-white">{h.wallet}</span>
             </td>
 
-            <td className="py-3 text-right">{h.amount}</td>
-            <td className="py-3 text-right">{h.balance}</td>
-            <td className="py-3 text-right">{h.value}</td>
+            <td className="py-3 text-left">{h.amount}</td>
+            <td className="py-3 text-left">{h.balance}</td>
+            <td className="py-3 text-left">{h.value}</td>
+            <td className="py-3 text-left">{h.last_activity_time}</td>
           </tr>
         ))}
       </tbody>
