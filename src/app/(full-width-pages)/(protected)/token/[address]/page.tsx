@@ -45,7 +45,7 @@ export default function Home() {
   }, [params]);
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://server23.looter.ai/evm-chart-ws/';
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'wss://server23.looter.ai/evm-chart-ws/';
 
   const [intervalUI, setIntervalUI] = useState<Interval>('1s');
 

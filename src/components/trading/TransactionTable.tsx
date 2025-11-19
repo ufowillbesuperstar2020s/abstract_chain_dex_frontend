@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTradesStore } from '@/app/stores/trades-store';
 import Spinner from '@/components/ui/Spinner';
 import PositionsTable from '@/components/trading/PositionsTable';
+import HoldersTable from '@/components/trading/holders/HoldersTable';
 import { subscribeTradesStream } from '@/utils/trades-stream';
 import type { Transaction } from '@/types/trades';
 
@@ -50,7 +51,7 @@ export default function TransactionTable({ pairAddress }: Props) {
     useTradesStore((s) => s.fetchTradesPaged);
   const prependTrades = useTradesStore((s) => s.prependTrades);
 
-  const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://160.202.131.23:8083';
+  const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'wss://server23.looter.ai/evm-chart-ws/';
 
   // ---- local ticking for Age mode
   const [, forceTick] = React.useState(0);
@@ -256,6 +257,24 @@ export default function TransactionTable({ pairAddress }: Props) {
   const counts = { holders: 4, devTokens: 6082 };
   const colClasses = ['w-28', 'w-24', '', 'w-36', 'w-28'] as const;
 
+  // wang_mock_data
+  const holdersData = [
+    {
+      rank: 1,
+      wallet: '0x75Ff...84901',
+      amount: '8,500,000 BELA',
+      balance: '8.50%',
+      value: '$1,275,000'
+    },
+    {
+      rank: 2,
+      wallet: '0x9D23...ACc1E',
+      amount: '5,210,000 BELA',
+      balance: '5.21%',
+      value: '$795,000'
+    }
+  ];
+
   return (
     // The component is a column: tabs fixed; ONLY the table scroller scrolls.
     <div className="flex h-full min-h-0 flex-col">
@@ -458,7 +477,7 @@ export default function TransactionTable({ pairAddress }: Props) {
         )}
         {activeTab === 'holders' && (
           <div id="tab-panel-holders" role="tabpanel" className="h-full overflow-auto p-6 text-white/60">
-            I need Figma design.
+            <HoldersTable holders={holdersData} />
           </div>
         )}
       </div>
