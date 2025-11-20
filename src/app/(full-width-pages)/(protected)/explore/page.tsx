@@ -12,7 +12,8 @@ import { fmtUSD } from '@/utils/fmtUSD';
 import { getDexLogosForTokens } from '@/utils/token_logo/dexScreenerLogos';
 import { getTokenAddress } from '@/utils/getTokenAddress';
 import PairFiltersDrawer from '@/components/explore/PairFiltersDrawer';
-import { PairFilters, emptyPairFilters, buildPairFiltersQuery, countActiveFilters } from '@/utils/pairFilters';
+import { PairFilters, emptyPairFilters, countActiveFilters } from '@/utils/pairFilters';
+import { fetchPairListFromApi } from '@/app/actions/pairs';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
@@ -227,15 +228,20 @@ function ExplorePageInner() {
 
       const resolution = RESOLUTION_FOR[timeRange] ?? '24h';
 
-      let url = `${API_BASE}/api/info/pair/list?chain_id=2741&resolution=${resolution}&index=${index}&limit=${limit}&order_by=liquidity desc`;
+      const data = await fetchPairListFromApi({
+        chain_id: 2741,
+        resolution,
+        index,
+        limit,
+        order_by: 'liquidity desc',
+        filters
+      });
 
-      // append filter parameters
-      url += buildPairFiltersQuery(filters);
+      if (!data) {
+        throw new Error('Failed to load pair list.');
+      }
 
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const json: ApiResp = await res.json();
+      const json: ApiResp = await data;
       setTotal(json?.total ?? 0);
       const mapped = json.pairs.map(mapPair);
       const addrs = mapped.map((r) => r.token_address).filter((a) => !!a);
