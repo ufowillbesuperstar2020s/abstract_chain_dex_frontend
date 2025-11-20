@@ -1,9 +1,8 @@
 'use client';
 
 import { create } from 'zustand';
-import axios, { AxiosResponse } from 'axios';
-import { StatusCodes } from 'http-status-codes';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
+import { fetchMarketDataFromApi } from '@/app/actions/market';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
@@ -152,15 +151,15 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
     set({ isLoading: true });
 
     try {
-      const url = `${API_BASE}/api/info/market/${addr}`;
-      const res: AxiosResponse<MarketApiResponse> = await axios.get(url);
+      const marketData = await fetchMarketDataFromApi(addr);
 
-      if (res.status !== StatusCodes.OK) {
-        throw new Error('Market API returned unsuccessful response');
+      if (!marketData) {
+        console.error('Failed to load market data from server action');
+        return set({ metrics: null });
       }
 
-      const t = res.data?.token ?? {};
-      const trade = res.data?.trade ?? null;
+      const t = marketData?.token ?? {};
+      const trade = marketData?.trade ?? null;
 
       const priceRaw = toNum(t.price);
       const liquidityUsd = toNum(t.liquidity);
