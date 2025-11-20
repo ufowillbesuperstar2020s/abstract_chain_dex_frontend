@@ -1,9 +1,8 @@
 'use client';
 
 import { create } from 'zustand';
-import axios, { AxiosResponse } from 'axios';
-import { StatusCodes } from 'http-status-codes';
 import type { TokenMetadata } from '@/types/api';
+import { fetchTokenMetadataFromApi } from '@/app/actions/token';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
@@ -36,28 +35,17 @@ export const useTokenInfoStore = create<TokenInfoState>((set, get) => ({
   fetchTokenMetadata: async (address: string) => {
     if (!address) return;
     set({ isLoading: true });
+
     try {
-      const res: AxiosResponse<Partial<TokenMetadata>> = await axios.get<Partial<TokenMetadata>>(
-        `${API_BASE}/api/info/token/${address}`
-      );
+      const normalized = await fetchTokenMetadataFromApi(address);
 
-      if (res.status !== StatusCodes.OK) {
-        throw new Error('Looter API returned unsuccessful response');
+      set({ tokenMetadata: normalized, tokenAddress: normalized.address });
+
+      if (typeof window !== 'undefined') {
+        window.gTokenAddress = normalized.address;
       }
-
-      const fromApis = res.data ?? {};
-
-      const normalized: TokenMetadata = {
-        token_name: fromApis.token_name ?? 'Noot Noot',
-        symbol: fromApis.symbol ?? 'NOOT',
-        decimals: fromApis.decimals ?? 8,
-        address: fromApis.address ?? address
-      };
-
-      set({ tokenMetadata: normalized, tokenAddress: address });
-      if (typeof window !== 'undefined') window.gTokenAddress = address;
     } catch (e) {
-      console.error('Error fetching token data:', e);
+      console.error('Error fetching token data via server action:', e);
       set({ tokenMetadata: null });
     } finally {
       set({ isLoading: false });
