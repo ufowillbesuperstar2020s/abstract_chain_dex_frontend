@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useModal } from '@/hooks/useModal';
-import TokenSearchModal from '@/components/trading/modal/TokenSearchModal';
+import TokenSearchModal from '@/components/trading/modal/TokenSearchModal/TokenSearchModal';
 
 export default function SearchLauncher() {
   const { isOpen, openModal, closeModal } = useModal();
