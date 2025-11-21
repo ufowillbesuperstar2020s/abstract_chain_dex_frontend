@@ -33,10 +33,12 @@ export const useTokenInfoStore = create<TokenInfoState>((set, get) => ({
   setTokenMetadata: (data) => set({ tokenMetadata: data }),
 
   fetchTokenMetadata: async (address: string) => {
+    console.log('wang_here');
     if (!address) return;
     set({ isLoading: true });
 
     try {
+      console.log('wang_address', address);
       const normalized = await fetchTokenMetadataFromApi(address);
 
       set({ tokenMetadata: normalized, tokenAddress: normalized.address });

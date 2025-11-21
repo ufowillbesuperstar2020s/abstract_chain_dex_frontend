@@ -9,6 +9,7 @@ import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { defaultExplorerBase, showTxToast } from '@/components/ui/toast/TxToast';
 import type { Address, Hash, Hex } from 'viem';
+import { getSwapQuote } from '@/app/actions/getSwapQuote';
 
 type AbstractSwapRequest = {
   wallet_address: string;
@@ -51,15 +52,14 @@ export default function Buy() {
         };
 
         try {
-          const res: AxiosResponse<Partial<AbstractSwapResult>> = await axios.post(
-            `${API_SWAP}/abs-swap-api/quote`,
-            payload,
-            {
-              headers: { 'Content-Type': 'application/json' }
-            }
-          );
+          const quote = await getSwapQuote(payload);
 
-          const swap_tx = res.data.txs?.swap;
+          if (!quote.ok) {
+            console.error(quote.error);
+            return;
+          }
+
+          const swap_tx = quote.data.txs?.swap;
 
           if (swap_tx) {
             const to: Address = swap_tx.to as Address;

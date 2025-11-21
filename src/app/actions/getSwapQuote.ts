@@ -1,0 +1,35 @@
+'use server';
+
+import axios from 'axios';
+
+const SWAP_API = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/abs-swap-api';
+
+export interface SwapQuotePayload {
+  wallet_address: string;
+  token_address: string;
+  amount_in: string;
+  is_sell: boolean;
+  slippage: number;
+}
+
+export async function getSwapQuote(payload: SwapQuotePayload) {
+  try {
+    const url = `${SWAP_API}/quote`;
+
+    const res = await axios.post(url, payload, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    return {
+      ok: true,
+      data: res.data
+    };
+  } catch (err: any) {
+    console.error('Swap quote error:', err.response?.data || err.message);
+
+    return {
+      ok: false,
+      error: err.response?.data || err.message
+    };
+  }
+}
