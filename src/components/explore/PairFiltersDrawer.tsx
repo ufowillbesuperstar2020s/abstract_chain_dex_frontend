@@ -96,8 +96,8 @@ export default function PairFiltersDrawer({ open, draft, onChangeDraft, onClose,
           <NumberRangeRow
             label="Market Cap"
             prefix="$"
-            minKey="marketCapMin"
-            maxKey="marketCapMax"
+            minKey="market_cap_min"
+            maxKey="market_cap_max"
             draft={draft}
             onChangeDraft={onChangeDraft}
           />
@@ -105,26 +105,26 @@ export default function PairFiltersDrawer({ open, draft, onChangeDraft, onClose,
           <NumberRangeRow
             label="Volume"
             prefix="$"
-            minKey="volumeMin"
-            maxKey="volumeMax"
+            minKey="volume_min"
+            maxKey="volume_max"
             draft={draft}
             onChangeDraft={onChangeDraft}
           />
 
           <NumberRangeRow
             label="Bond Progress"
-            minKey="bondProgressMin"
-            maxKey="bondProgressMax"
+            minKey="bond_pprogress_min"
+            maxKey="bond_progress_max"
             draft={draft}
             onChangeDraft={onChangeDraft}
           />
 
-          <NumberRangeRow label="Age" minKey="ageMin" maxKey="ageMax" draft={draft} onChangeDraft={onChangeDraft} />
+          <NumberRangeRow label="Age" minKey="age_min" maxKey="age_max" draft={draft} onChangeDraft={onChangeDraft} />
 
           <NumberRangeRow
             label="Holders"
-            minKey="holdersMin"
-            maxKey="holdersMax"
+            minKey="holders_min"
+            maxKey="holders_max"
             draft={draft}
             onChangeDraft={onChangeDraft}
           />
