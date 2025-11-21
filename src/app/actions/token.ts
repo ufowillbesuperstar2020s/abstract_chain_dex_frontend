@@ -12,7 +12,6 @@ export async function fetchTokenMetadataFromApi(address: string): Promise<TokenM
     throw new Error('Token address is required');
   }
 
-  console.log('wang_url', `${API_BASE}/api/info/token/${address}`);
   const res: AxiosResponse<Partial<TokenMetadata>> = await axios.get<Partial<TokenMetadata>>(
     `${API_BASE}/api/info/token/${address}`
   );
@@ -22,8 +21,6 @@ export async function fetchTokenMetadataFromApi(address: string): Promise<TokenM
   }
 
   const fromApis = res.data ?? {};
-
-  console.log('wang_fromApis', fromApis);
 
   const normalized: TokenMetadata = {
     token_name: fromApis.token_name ?? 'Noot Noot',
