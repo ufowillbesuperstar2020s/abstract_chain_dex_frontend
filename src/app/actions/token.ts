@@ -8,9 +8,13 @@ const API_BASE =
   process.env.LOOTER_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
 
 export async function fetchTokenMetadataFromApi(address: string): Promise<TokenMetadata> {
+  console.log('wang_token.ts_address', address);
   if (!address) {
     throw new Error('Token address is required');
   }
+
+  console.log('wang_see_url');
+  console.log('wang_token_url', `${API_BASE}/api/info/token/${address}`);
 
   const res: AxiosResponse<Partial<TokenMetadata>> = await axios.get<Partial<TokenMetadata>>(
     `${API_BASE}/api/info/token/${address}`

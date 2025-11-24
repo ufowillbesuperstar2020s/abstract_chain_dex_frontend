@@ -38,17 +38,21 @@ export default function TokenDataContainer({ interval, onIntervalChange, pairAdd
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
 
-  console.log('wang_TokenDataContainer');
-
   // existing token info (name/symbol/address/decimals)
   const tokenMetadata = useTokenInfoStore((s) => s.tokenMetadata);
-  console.log('wang_tokenMetadata', tokenMetadata);
+  const fetchTokenMetadata = useTokenInfoStore((s) => s.fetchTokenMetadata);
   const tokenInfoLoading = useTokenInfoStore((s) => s.isLoading);
-  console.log('wang_tokenInfoLoading', tokenInfoLoading);
   const tokenAddress = tokenMetadata?.address;
 
   // new metrics store
   const { metrics, isLoading: metricsLoading, quote, setPairAddress, fetchMetrics } = useTokenMetricsStore();
+
+  useEffect(() => {
+    if (pairAddress) {
+      // fetch base token metadata
+      fetchTokenMetadata(pairAddress);
+    }
+  }, [pairAddress]);
 
   // keep metrics store in sync with current token/pair
   useEffect(() => {

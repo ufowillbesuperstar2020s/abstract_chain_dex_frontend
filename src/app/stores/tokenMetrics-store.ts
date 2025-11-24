@@ -151,6 +151,7 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
     set({ isLoading: true });
 
     try {
+      console.log('wang_useTokenMetricsStore_fetch');
       const marketData = await fetchMarketDataFromApi(addr);
 
       if (!marketData) {
