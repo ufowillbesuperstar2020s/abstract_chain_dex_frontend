@@ -37,7 +37,6 @@ export const useTokenInfoStore = create<TokenInfoState>((set, get) => ({
     set({ isLoading: true });
 
     try {
-      console.log('wang_fetchTokenMetadataFromApi');
       const normalized = await fetchTokenMetadataFromApi(address);
 
       set({ tokenMetadata: normalized, tokenAddress: normalized.address });
