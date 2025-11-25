@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
 import { IntervalDropdownUI, type Interval } from './IntervalDropdownUI';
+import { getCachedLogo, setCachedLogo } from '@/utils/token_logo/localLogoCache';
+import { getDexLogosForTokens } from '@/utils/token_logo/dexScreenerLogos';
 
 function compact(n: number | null): string {
   if (n == null || !Number.isFinite(n)) return '—';
@@ -43,7 +45,40 @@ export default function TokenDataContainer({
   const { metrics, fetchMetrics, setPairAddress } = useTokenMetricsStore();
   const metricsLoading = useTokenMetricsStore((s) => s.isLoading);
 
-  // Load metrics after decimals are available
+  const [logoUrl, setLogoUrl] = useState<string>('/images/error/question_mark.png');
+
+  // === NEW: Load logo from cache or DexScreener ===
+  useEffect(() => {
+    if (!tokenMeta?.address) return;
+
+    const addr = tokenMeta.address.toLowerCase();
+
+    // Try cache first
+    const cached = getCachedLogo(addr);
+    if (cached) {
+      setLogoUrl(cached);
+      return;
+    }
+
+    // If not cached → fetch from DexScreener only this token
+    (async () => {
+      try {
+        const logos = await getDexLogosForTokens([addr]);
+        const url = logos[addr];
+
+        if (url) {
+          setCachedLogo(addr, url);
+          setLogoUrl(url);
+        } else {
+          setLogoUrl('/images/error/question_mark.png');
+        }
+      } catch {
+        setLogoUrl('/images/error/question_mark.png');
+      }
+    })();
+  }, [tokenMeta?.address]);
+
+  // Load metrics after decimals available
   useEffect(() => {
     if (!pairAddress) return;
     if (!decimalsReady) return;
@@ -99,11 +134,10 @@ export default function TokenDataContainer({
             {/* Token avatar + name */}
             <div className="inline-flex items-center gap-3">
               <div className="h-12 w-12 overflow-hidden rounded-lg">
-                <Image src="/images/icons/bela_token.svg" width={24} height={24} alt="token" className="h-12 w-12" />
+                <Image src={logoUrl} width={24} height={24} alt="token" className="h-12 w-12" />
               </div>
 
               <div className="flex flex-col">
-                {/* symbol + token_name */}
                 <div className="flex items-center gap-2">
                   <h4 className="text-lg font-bold">{symbol}</h4>
                   <h3 className="max-w-[220px] truncate text-lg leading-tight text-gray-500 dark:text-gray-400">
