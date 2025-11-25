@@ -10,18 +10,14 @@ export default function VolumeStats({ className = '' }) {
 
   const decimalsReady = tokenMetadata && !isLoading && tokenMetadata.decimals != null;
 
-  // Do not render until decimals + metrics are ready
-  if (!decimalsReady) {
-    return <div className="text-sm text-gray-500">Loading volumes...</div>;
-  }
-
-  const buys = volumes.buys;
-  const sells = volumes.sells;
+  const buys = decimalsReady ? volumes.buys : { count: 0, usd: 0 };
+  const sells = decimalsReady ? volumes.sells : { count: 0, usd: 0 };
 
   const fmtK = (n: number) =>
-    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${(n / 1_000).toFixed(1)}K` : n.toFixed(0);
+    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toFixed(0);
 
   const totalCount = buys.count + sells.count;
+
   const buysPct = totalCount > 0 ? (buys.count / totalCount) * 100 : 50;
   const sellsPct = Math.max(0, 100 - buysPct);
 
@@ -34,6 +30,7 @@ export default function VolumeStats({ className = '' }) {
             {buys.count.toLocaleString()} / <span className="text-white">${fmtK(buys.usd)}</span>
           </span>
         </div>
+
         <div className="flex flex-col text-right">
           <span>Sells</span>
           <span>
@@ -44,8 +41,8 @@ export default function VolumeStats({ className = '' }) {
 
       <div className="mt-1 h-[6px] w-full overflow-hidden rounded-full bg-white/10">
         <div className="flex h-full w-full">
-          <div className="mr-[2px] rounded-full bg-emerald-500" style={{ width: `${buysPct}%` }} />
-          <div className="ml-[2px] rounded-full bg-[rgba(255,68,0,1)]" style={{ width: `${sellsPct}%` }} />
+          <div className="mr-[2px] h-full rounded-full bg-emerald-500" style={{ width: `${buysPct}%` }} />
+          <div className="ml-[2px] h-full rounded-full bg-[rgba(255,68,0,1)]" style={{ width: `${sellsPct}%` }} />
         </div>
       </div>
     </div>
