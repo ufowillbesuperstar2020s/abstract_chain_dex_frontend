@@ -99,7 +99,7 @@ export default function TokenDataContainer({
             {/* Token avatar + name */}
             <div className="inline-flex items-center gap-3">
               <div className="h-12 w-12 overflow-hidden rounded-lg">
-                <Image src="/images/icons/bela_token.svg" width={40} height={40} alt="token" />
+                <Image src="/images/icons/bela_token.svg" width={24} height={24} alt="token" className="h-12 w-12" />
               </div>
 
               <div className="flex flex-col">
