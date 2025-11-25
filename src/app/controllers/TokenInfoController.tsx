@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { getTokenAddress } from '@/utils/getTokenAddress';
-import { searchPairs } from '@/app/actions/searchPairs';
 
 function getAddressFromRoute(pathname: string | null, params: Record<string, unknown> | null) {
   const p = params ?? {};
@@ -34,17 +33,15 @@ export default function TokenInfoController() {
     if (!pairAddress) return;
 
     async function resolveAndLoad(currentAddr: string) {
+      const url = `/api/search?q=${encodeURIComponent(currentAddr)}&chain_id=2741&resolution=1d&index=0&limit=10`;
       try {
-        const json = await searchPairs({
-          q: currentAddr,
-          chainId: 2741,
-          resolution: '1d',
-          index: 0,
-          limit: 10
-        });
-
+        const r = await fetch(url, { cache: 'no-store' });
+        if (!r.ok) throw new Error(`search upstream error ${r.status}`);
+        const json = await r.json();
         const pairs = json?.data?.pairs ?? json?.pairs ?? [];
-        if (!pairs?.length) return;
+        if (!pairs?.length) {
+          return;
+        }
 
         const p = pairs[0];
         const nextAddr = getTokenAddress({
