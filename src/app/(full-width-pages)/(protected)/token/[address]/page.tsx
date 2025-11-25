@@ -14,7 +14,7 @@ import type { Interval } from '@/components/trading/token-data-container/Interva
 import { isAddress, getAddress } from 'viem';
 
 const defaultWidgetProps: Partial<ChartingLibraryWidgetOptions> = {
-  symbol: 'NOOT', // wang_insert_correct_symbol
+  symbol: 'NOOT',
   library_path: '/tv_charting_library/charting_library/',
   locale: 'en',
   theme: 'dark',

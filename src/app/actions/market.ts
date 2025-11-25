@@ -14,7 +14,9 @@ export async function fetchMarketDataFromApi(address: string): Promise<MarketApi
 
   try {
     const url = `${API_BASE}/api/info/market/${address}`;
+
     const res: AxiosResponse<MarketApiResponse> = await axios.get(url);
+
     if (res.status !== StatusCodes.OK) {
       throw new Error('Market API returned unsuccessful response');
     }
