@@ -2,209 +2,149 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { toast } from 'react-hot-toast';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
-import { IntervalDropdownUI } from '@/components/trading/token-data-container/IntervalDropdownUI';
-import type { Interval } from '@/components/trading/token-data-container/IntervalDropdownUI';
+import { IntervalDropdownUI, type Interval } from './IntervalDropdownUI';
 
-/** compact number like 10.9K, 1.2M */
-function compact(n: number | null, opts: Intl.NumberFormatOptions = {}): string {
+function compact(n: number | null): string {
   if (n == null || !Number.isFinite(n)) return '—';
-  return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 2, ...opts }).format(n);
+  return new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 2
+  }).format(n);
 }
 function usd(n: number | null): string {
-  if (n == null || !Number.isFinite(n)) return '—';
-  return '$' + compact(n);
+  return n == null ? '—' : '$' + compact(n);
 }
 function usdTiny(n: number | null): string {
-  if (n == null || !Number.isFinite(n)) return '—';
+  if (n == null) return '—';
   if (n < 1) return `$${n.toFixed(6)}`;
   if (n < 10) return `$${n.toFixed(4)}`;
   if (n < 1000) return `$${n.toFixed(2)}`;
   return '$' + compact(n);
 }
 
-type Props = {
-  /** Current UI interval value, e.g. '1s' | '1m' | '5m' ... */
+export default function TokenDataContainer({
+  interval,
+  onIntervalChange,
+  pairAddress
+}: {
   interval: Interval;
-  /** Callback when user selects a new interval */
   onIntervalChange: (v: Interval) => void;
-
   pairAddress: string;
-};
-
-export default function TokenDataContainer({ interval, onIntervalChange, pairAddress }: Props) {
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
+}) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
 
-  // existing token info (name/symbol/address/decimals)
-  const tokenMetadata = useTokenInfoStore((s) => s.tokenMetadata);
-  const tokenInfoLoading = useTokenInfoStore((s) => s.isLoading);
-  const tokenAddress = tokenMetadata?.address;
+  const tokenMeta = useTokenInfoStore((s) => s.tokenMetadata);
+  const tokenLoading = useTokenInfoStore((s) => s.isLoading);
+  const decimalsReady = tokenMeta && !tokenLoading && tokenMeta.decimals != null;
 
-  // new metrics store
-  const { metrics, isLoading: metricsLoading, quote, setPairAddress, fetchMetrics } = useTokenMetricsStore();
+  const { metrics, fetchMetrics, setPairAddress } = useTokenMetricsStore();
+  const metricsLoading = useTokenMetricsStore((s) => s.isLoading);
 
-  // keep metrics store in sync with current token/pair
+  // Load metrics after decimals are available
   useEffect(() => {
     if (!pairAddress) return;
+    if (!decimalsReady) return;
     setPairAddress(pairAddress);
     fetchMetrics(pairAddress);
-  }, [tokenAddress, pairAddress, setPairAddress, fetchMetrics]);
+  }, [pairAddress, decimalsReady]);
 
-  // if quote (USD/WETH) changes elsewhere (e.g., your stream), refresh
-  useEffect(() => {
-    fetchMetrics();
-  }, [quote, fetchMetrics]);
-
-  const update = () => {
+  const updateOverflow = () => {
     const el = scrollerRef.current;
     if (!el) return;
-    const left = el.scrollLeft > 0;
-    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
-    setHasOverflow(left || right || el.scrollWidth > el.clientWidth + 1);
+    setHasOverflow(
+      el.scrollWidth > el.clientWidth + 1 || el.scrollLeft > 0 || el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+    );
   };
 
   useEffect(() => {
-    update();
+    updateOverflow();
     const el = scrollerRef.current;
     if (!el) return;
-    const opts: AddEventListenerOptions = { passive: true };
-    const handleScroll: EventListener = () => update();
-    el.addEventListener('scroll', handleScroll, opts);
-    const ro = new ResizeObserver(update);
+
+    const onScroll = () => updateOverflow();
+    const ro = new ResizeObserver(updateOverflow);
+    el.addEventListener('scroll', onScroll, { passive: true });
     ro.observe(el);
+
     return () => {
-      el.removeEventListener('scroll', handleScroll, opts);
+      el.removeEventListener('scroll', onScroll);
       ro.disconnect();
     };
   }, []);
 
-  const scrollerPad = hasOverflow ? 'px-10 sm:px-12' : 'px-3 sm:px-4';
+  const loading = !decimalsReady || metricsLoading || !metrics;
 
-  const name = tokenMetadata?.token_name ?? '—';
-  const symbol = tokenMetadata?.symbol ?? '—';
-  const address = tokenMetadata?.address ?? '—';
-  const canCopy = address !== '—';
+  const symbol = tokenMeta?.symbol ?? '—';
+  const marketCap =
+    !loading && metrics?.usdPrice && metrics?.supplyHuman ? metrics.usdPrice * metrics.supplyHuman : null;
 
-  const handleCopy = async () => {
-    if (!canCopy) return;
-    try {
-      await navigator.clipboard.writeText(address);
-      toast.success('Address copied to clipboard');
-    } catch (err) {
-      toast.error('Failed to copy address, err:' + err);
-    }
-  };
-
-  // derived display strings
-  const usdPrice = metrics?.usdPrice ?? null;
-  const liquidityUsd = metrics?.liquidityUsd ?? null;
-  const supplyHuman = metrics?.supplyHuman ?? null;
-
-  const priceStr = usdTiny(usdPrice);
-  const liqStr = usd(liquidityUsd);
-  const supplyStr = compact(supplyHuman);
-  const isLoading = tokenInfoLoading || metricsLoading;
-
-  const marketCap: number | null = usdPrice !== null && supplyHuman !== null ? usdPrice * supplyHuman : null;
-  const mcStr = usd(marketCap);
+  const priceDisp = loading ? '—' : usdTiny(metrics?.usdPrice ?? null);
+  const liquidityDisp = loading ? '—' : usd(metrics?.liquidityUsd ?? null);
+  const supplyDisp = loading ? '—' : compact(metrics?.supplyHuman ?? null);
+  const marketCapDisp = loading ? '—' : usd(marketCap);
 
   return (
     <div className="relative">
       <div className="flex items-center rounded-xl bg-[rgba(119,136,159,0.16)] backdrop-blur-[111px]">
         <div
           ref={scrollerRef}
-          className={`no-scrollbar overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap ${scrollerPad} min-w-0 flex-1`}
+          className={`no-scrollbar flex-1 overflow-x-auto whitespace-nowrap ${
+            hasOverflow ? 'px-10 sm:px-12' : 'px-3 sm:px-4'
+          }`}
         >
-          <div className="inline-flex items-center gap-6 py-3 text-white dark:text-white/90">
-            {/* avatar + name */}
-            <div className="inline-flex shrink-0 items-center gap-3">
-              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-                <Image
-                  width={40}
-                  height={40}
-                  src="/images/icons/bela_token.svg"
-                  alt="token"
-                  className="h-12 w-12 object-cover"
-                />
+          <div className="inline-flex items-center gap-6 py-3 text-white/90">
+            {/* Token avatar + name */}
+            <div className="inline-flex items-center gap-3">
+              <div className="h-12 w-12 overflow-hidden rounded-lg">
+                <Image src="/images/icons/bela_token.svg" width={40} height={40} alt="token" />
               </div>
 
-              <div className="min-w-0 flex-col items-start">
-                <div className="flex min-w-0 items-center gap-2">
-                  <h4 className="flex-1 shrink-0 text-lg leading-tight font-bold text-gray-800 dark:text-white/90">
-                    {symbol}
-                  </h4>
-                  <div className="ml-auto flex max-w-[220px] min-w-0 items-center gap-1">
-                    <button
-                      type="button"
-                      className="ml-1 hidden align-middle leading-none text-gray-400 hover:text-gray-200 disabled:opacity-40"
-                      onClick={handleCopy}
-                      disabled={!canCopy}
-                      aria-label="Copy token address"
-                      title={canCopy ? 'Copy address' : 'No address'}
-                    >
-                      <span aria-hidden>
-                        <i className="fa-regular fa-copy"></i>
-                      </span>
-                    </button>
-                    <h3 className="truncate text-lg leading-tight text-gray-500 dark:text-gray-400">{name}</h3>
-                  </div>
+              <div className="flex flex-col">
+                {/* symbol + token_name */}
+                <div className="flex items-center gap-2">
+                  <h4 className="text-lg font-bold">{symbol}</h4>
+                  <h3 className="max-w-[220px] truncate text-lg leading-tight text-gray-500 dark:text-gray-400">
+                    {tokenMeta?.token_name ?? '—'}
+                  </h3>
                 </div>
 
-                <div className="flex items-center gap-2 text-base leading-none text-gray-500 dark:text-gray-400">
-                  <span className="align-middle text-lg dark:text-white/90">{mcStr}</span>
-                </div>
+                {/* Marketcap */}
+                <div className="text-base text-gray-300">{marketCapDisp}</div>
               </div>
             </div>
 
-            {/* metrics */}
-            <div className="inline-flex shrink-0 items-center border-l dark:border-gray-600">
-              <div className="inline-flex shrink-0 items-center gap-2">
-                <Metric label="Price" value={priceStr} />
-                <Metric label="Liquidity" value={liqStr} />
-                <Metric label="Supply" value={supplyStr} />
-              </div>
+            {/* Metrics */}
+            <div className="inline-flex items-center gap-5 border-l border-gray-600 pl-4">
+              <Metric label="Price" value={priceDisp} />
+              <Metric label="Liquidity" value={liquidityDisp} />
+              <Metric label="Supply" value={supplyDisp} />
             </div>
           </div>
         </div>
 
-        {/* right side interval select */}
         <div className="px-3">
           <IntervalDropdownUI initial={interval} onChange={onIntervalChange} />
         </div>
       </div>
 
       <style jsx>{`
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
         .no-scrollbar::-webkit-scrollbar {
           display: none;
         }
       `}</style>
-
-      {isLoading && (
-        <div className="absolute inset-x-0 -bottom-8 text-center text-xs text-gray-400">Loading token…</div>
-      )}
     </div>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="ml-5 inline-flex min-w-0 flex-col">
-      <div className="text-sm tracking-wide text-white/60">{label}</div>
-      <div className="mt-1 flex items-center gap-1 truncate text-base font-semibold [font-variant-numeric:tabular-nums]">
-        <Image
-          width={12}
-          height={12}
-          src="/images/icons/ethereum_vector.svg"
-          alt="token"
-          className="h-3 w-3 object-cover"
-        />
+    <div className="flex flex-col">
+      <div className="text-sm text-white/60">{label}</div>
+      <div className="flex items-center gap-1 text-base font-semibold">
+        <Image src="/images/icons/ethereum_vector.svg" width={12} height={12} alt="eth" />
         {value}
       </div>
     </div>

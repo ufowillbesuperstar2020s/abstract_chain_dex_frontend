@@ -1,63 +1,51 @@
 'use client';
 
 import React from 'react';
-import { useTokenMetricsStore, type VolumeWindow } from '@/app/stores/tokenMetrics-store';
+import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
+import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 
-export type VolumeStatsProps = {
-  timeframe?: VolumeWindow;
-  className?: string;
-};
+export default function VolumeStats({ className = '' }) {
+  const { volumes } = useTokenMetricsStore();
+  const { tokenMetadata, isLoading } = useTokenInfoStore();
 
-export default function VolumeStats({ className = '' }: VolumeStatsProps) {
-  const { buys, sells } = useTokenMetricsStore((s) => s.volumes);
+  const decimalsReady = tokenMetadata && !isLoading && tokenMetadata.decimals != null;
 
-  const fmtK = (n: number) => {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-    return n.toFixed(0);
-  };
+  // Do not render until decimals + metrics are ready
+  if (!decimalsReady) {
+    return <div className="text-sm text-gray-500">Loading volumes...</div>;
+  }
 
-  const buyCount = buys?.count ?? 0;
-  const sellCount = sells?.count ?? 0;
-  const totalCount = buyCount + sellCount;
+  const buys = volumes.buys;
+  const sells = volumes.sells;
 
-  const buysPct = totalCount > 0 ? (buyCount / totalCount) * 100 : 50;
+  const fmtK = (n: number) =>
+    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${(n / 1_000).toFixed(1)}K` : n.toFixed(0);
+
+  const totalCount = buys.count + sells.count;
+  const buysPct = totalCount > 0 ? (buys.count / totalCount) * 100 : 50;
   const sellsPct = Math.max(0, 100 - buysPct);
 
-  const buysUsdDisp = `$${fmtK(Math.max(0, buys.usd || 0))}`;
-  const sellsUsdDisp = `$${fmtK(Math.max(0, sells.usd || 0))}`;
-
   return (
-    <div className={['w-full', 'border-b', 'dark:border-gray-600', 'pb-5', className].join(' ')}>
-      {/* Top labels */}
-      <div className="mb-2 flex items-end justify-between text-base">
-        <div className="flex flex-col text-[rgba(130,140,154,1)]">
+    <div className={`w-full border-b pb-5 dark:border-gray-600 ${className}`}>
+      <div className="mb-2 flex justify-between text-base text-[rgba(130,140,154,1)]">
+        <div className="flex flex-col">
           <span>Buys</span>
           <span>
-            {(buys.count ?? 0).toLocaleString()} / <span className="text-white">{buysUsdDisp}</span>
+            {buys.count.toLocaleString()} / <span className="text-white">${fmtK(buys.usd)}</span>
           </span>
         </div>
-        <div className="flex flex-col text-right text-[rgba(130,140,154,1)]">
+        <div className="flex flex-col text-right">
           <span>Sells</span>
           <span>
-            {(sells.count ?? 0).toLocaleString()} / <span className="text-white">{sellsUsdDisp}</span>
+            {sells.count.toLocaleString()} / <span className="text-white">${fmtK(sells.usd)}</span>
           </span>
         </div>
       </div>
 
-      {/* Shared bar */}
       <div className="mt-1 h-[6px] w-full overflow-hidden rounded-full bg-white/10">
         <div className="flex h-full w-full">
-          <div
-            className="mr-[2px] h-full rounded-full bg-emerald-500"
-            style={{ width: `${buysPct}%` }}
-            title={`Buys ${buysPct.toFixed(1)}%`}
-          />
-          <div
-            className="ml-[2px] h-full rounded-full bg-[rgba(255,68,0,1)]"
-            style={{ width: `${sellsPct}%` }}
-            title={`Sells ${sellsPct.toFixed(1)}%`}
-          />
+          <div className="mr-[2px] rounded-full bg-emerald-500" style={{ width: `${buysPct}%` }} />
+          <div className="ml-[2px] rounded-full bg-[rgba(255,68,0,1)]" style={{ width: `${sellsPct}%` }} />
         </div>
       </div>
     </div>
