@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import axios, { AxiosResponse } from 'axios';
 import { StatusCodes } from 'http-status-codes';
+import { fetchPositionsFromApi } from '@/app/actions/getPositions';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
@@ -46,15 +47,14 @@ export const usePositionsStore = create<State>((set, get) => ({
     }));
 
     try {
-      const url = `${API_BASE}/api/info/positions/${wallet}`;
-      const res: AxiosResponse<ApiPosition[]> = await axios.get<ApiPosition[]>(url);
+      const result = await fetchPositionsFromApi(wallet);
 
-      if (res.status !== StatusCodes.OK || !Array.isArray(res.data)) {
-        throw new Error(`Unexpected response (${res.status})`);
+      if (!result.ok) {
+        throw new Error(`Unexpected response (${result.status})`);
       }
 
       set((s) => ({
-        positionsByWallet: { ...s.positionsByWallet, [wallet]: res.data },
+        positionsByWallet: { ...s.positionsByWallet, [wallet]: result.data },
         loadingByWallet: { ...s.loadingByWallet, [wallet]: false }
       }));
     } catch (e: unknown) {
