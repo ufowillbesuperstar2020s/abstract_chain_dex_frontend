@@ -5,7 +5,6 @@ import type { TokenMetadata } from '@/types/api';
 import { fetchTokenMetadataFromApi } from '@/app/actions/token';
 
 type TokenInfoState = {
-  // co
   tokenAddress: string | null;
   tokenMetadata: TokenMetadata | null;
   isLoading: boolean;
