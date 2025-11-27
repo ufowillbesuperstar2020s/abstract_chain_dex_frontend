@@ -9,6 +9,7 @@ import PositionsTable from '@/components/trading/PositionsTable';
 import HoldersTable from '@/components/trading/holders/HoldersTable';
 import { subscribeTradesStream } from '@/utils/trades-stream';
 import type { Transaction } from '@/types/trades';
+import { useAccount } from 'wagmi';
 
 interface Props {
   pairAddress: string;
@@ -50,6 +51,8 @@ export default function TransactionTable({ pairAddress }: Props) {
   const fetchTradesPaged: undefined | ((pair: string, index: number, limit?: number) => Promise<number>) =
     useTradesStore((s) => s.fetchTradesPaged);
   const prependTrades = useTradesStore((s) => s.prependTrades);
+
+  const { address } = useAccount();
 
   const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'wss://server23.looter.ai/evm-chart-ws/';
 
@@ -312,7 +315,7 @@ export default function TransactionTable({ pairAddress }: Props) {
         {/* POSITIONS TAB */}
         {activeTab === 'positions' && (
           <div id="tab-panel-positions" role="tabpanel" className="h-full overflow-auto">
-            <PositionsTable walletAddress="0xf175e01a468b489f77450aebfbee0ecd2c7d83d1" />
+            <PositionsTable walletAddress={address} />
           </div>
         )}
 

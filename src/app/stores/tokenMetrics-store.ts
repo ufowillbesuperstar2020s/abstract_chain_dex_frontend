@@ -31,9 +31,7 @@ export type TokenMetrics = {
   trade?: MarketApiTrade | null;
 };
 
-export type VolumeWindow = '1m' | '5m' | '15m' | '1h' | '4h' | '12h' | '24h';
-
-type Volumes = {
+export type Volumes = {
   buys: { count: number; usd: number };
   sells: { count: number; usd: number };
 };
@@ -49,12 +47,10 @@ const toNum = (v: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-// convert raw big integer to number using decimals
 const bigBaseUnitsToNumber = (raw: string | null | undefined, decimals: number): number => {
   if (!raw) return 0;
   try {
     const bi = BigInt(raw);
-    if (decimals === 0) return Number(bi);
     const base = BigInt(10) ** BigInt(decimals);
     return Number(bi / base) + Number(bi % base) / Number(base);
   } catch {
@@ -64,6 +60,7 @@ const bigBaseUnitsToNumber = (raw: string | null | undefined, decimals: number):
 
 function computeVolumes(metrics: TokenMetrics | null, decimals: number): Volumes {
   if (!metrics) return DEFAULT_VOLUMES;
+
   const buyVol = bigBaseUnitsToNumber(metrics.buyVolumeRaw ?? '0', decimals);
   const sellVol = bigBaseUnitsToNumber(metrics.sellVolumeRaw ?? '0', decimals);
   const tokenUsd = metrics.usdPrice ?? 0;
@@ -74,15 +71,33 @@ function computeVolumes(metrics: TokenMetrics | null, decimals: number): Volumes
   };
 }
 
+/* --------------------------------------------------------
+ * Multi-token type for PositionsTable
+ * -------------------------------------------------------- */
+
+export type MarketDataLite = {
+  usdPrice: number;
+  liquidityUsd: number;
+  supplyHuman: number;
+};
+
+/* --------------------------------------------------------
+ * COMBINED STORE (WORKS FOR BOTH TRADING PAGE + POSITIONS PAGE)
+ * -------------------------------------------------------- */
+
 type TokenMetricsState = {
   pairAddress: string | null;
   metrics: TokenMetrics | null;
   volumes: Volumes;
   isLoading: boolean;
-
   setPairAddress: (addr: string) => void;
   fetchMetrics: (pairAddress?: string) => Promise<void>;
   refresh: () => Promise<void>;
+
+  /* PositionsTable multi-token support */
+  metricsMap: Record<string, MarketDataLite | undefined>;
+  getMetrics: (addr: string) => MarketDataLite | undefined;
+  loadMetrics: (addr: string) => Promise<void>;
 };
 
 export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
@@ -97,7 +112,6 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
     const addr = pairAddress ?? get().pairAddress;
     if (!addr) return;
 
-    // WAIT until token metadata & decimals finish loading
     const { tokenMetadata, isLoading: metaLoading } = useTokenInfoStore.getState();
     if (metaLoading || !tokenMetadata?.decimals) return;
 
@@ -127,20 +141,15 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
 
       if (trade) {
         const order: TradeWindowKey[] = ['_1h', '_4h', '_12h', '_1d'];
-        let window: TradeWindow | undefined;
-
         for (const k of order) {
           if (trade[k]) {
-            window = trade[k];
+            const window = trade[k]!;
+            buyCount = toNum(window.buy_count) ?? 0;
+            sellCount = toNum(window.sell_count) ?? 0;
+            buyVolumeRaw = window.buy_vol ?? '0';
+            sellVolumeRaw = window.sell_vol ?? '0';
             break;
           }
-        }
-
-        if (window) {
-          buyCount = toNum(window.buy_count) ?? 0;
-          sellCount = toNum(window.sell_count) ?? 0;
-          buyVolumeRaw = window.buy_vol ?? '0';
-          sellVolumeRaw = window.sell_vol ?? '0';
         }
       }
 
@@ -156,9 +165,10 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
       };
 
       const volumes = computeVolumes(metrics, decimals);
+
       set({ metrics, volumes });
     } catch (err) {
-      console.error('metrics error', err);
+      console.error('[metrics] fetch error:', err);
       set({ metrics: null, volumes: DEFAULT_VOLUMES });
     } finally {
       set({ isLoading: false });
@@ -167,5 +177,38 @@ export const useTokenMetricsStore = create<TokenMetricsState>((set, get) => ({
 
   refresh: async () => {
     await get().fetchMetrics();
+  },
+
+  /* ================ MULTI-TOKEN SYSTEM (PositionsTable) ================ */
+  metricsMap: {},
+
+  getMetrics: (addr) => {
+    return get().metricsMap[addr.toLowerCase()];
+  },
+
+  loadMetrics: async (addr: string) => {
+    const key = addr.toLowerCase();
+
+    const meta = useTokenInfoStore.getState().getTokenMetadata(key);
+    if (!meta) return;
+
+    try {
+      const data = await fetchMarketDataFromApi(addr);
+      if (!data) return;
+
+      const t = data.token ?? {};
+
+      const metricsLite: MarketDataLite = {
+        usdPrice: Number(t.price ?? 0),
+        liquidityUsd: Number(t.liquidity ?? 0),
+        supplyHuman: t.total_supply ? bigBaseUnitsToNumber(String(t.total_supply), meta.decimals) : 0
+      };
+
+      set((s) => ({
+        metricsMap: { ...s.metricsMap, [key]: metricsLite }
+      }));
+    } catch (err) {
+      console.error('[metricsMap] load error:', err);
+    }
   }
 }));

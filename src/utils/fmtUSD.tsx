@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 function toPlainDecimalString(n: number): string {
   if (!Number.isFinite(n)) return '0';
   const s = String(n);
@@ -35,12 +33,16 @@ function toPlainDecimalString(n: number): string {
  * - |n| < 1          -> "$x.xxxx"
  * - >= 1             -> K/M/B/T rules
  */
-export function fmtUSD(n: number): ReactNode {
-  if (!Number.isFinite(n)) return '$0.00';
+export function fmtUSD(n: number): React.ReactNode {
+  if (!Number.isFinite(n)) return '$0';
   const abs = Math.abs(n);
 
-  // Tiny numbers: "$0.0 n digits"
-  if (abs > 0 && abs < 0.0001) {
+  // === CLEAN ZERO RULE ===
+  // If value is essentially zero, return "$0"
+  if (abs === 0 || abs < 1e-12) return '$0';
+
+  // Tiny numbers: "$0.0 (subscript zeros) digits"
+  if (abs < 0.0001) {
     const dec = toPlainDecimalString(abs);
     const after = dec.startsWith('0.') ? dec.slice(2) : dec;
     const m = after.match(/^0+/);
@@ -48,7 +50,6 @@ export function fmtUSD(n: number): ReactNode {
     const tail = after.slice(zeroCount);
     const digits = tail.replace(/\D/g, '').slice(0, 4) || '0';
 
-    // Subscript effect: slightly smaller and lowered
     return (
       <span>
         $0.0{' '}
@@ -67,7 +68,7 @@ export function fmtUSD(n: number): ReactNode {
     );
   }
 
-  // Small but not tiny
+  // Small but not tiny (<1)
   if (abs < 1) return `$${n.toFixed(4)}`;
 
   // Large suffix rules
@@ -76,6 +77,22 @@ export function fmtUSD(n: number): ReactNode {
   if (abs >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `$${(n / 1_000).toFixed(2)}K`;
 
-  // Normal (clean result: remove ".00")
+  // Normal numbers (clean ".00")
   return `$${Number(n.toFixed(2))}`;
+}
+
+export function usdTiny(n: number | null): string {
+  if (n == null) return '—';
+  if (n < 1) return `$${n.toFixed(6)}`;
+  if (n < 10) return `$${n.toFixed(4)}`;
+  if (n < 1000) return `$${n.toFixed(2)}`;
+  return '$' + compact(n);
+}
+
+function compact(n: number | null): string {
+  if (n == null || !Number.isFinite(n)) return '—';
+  return new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 2
+  }).format(n);
 }

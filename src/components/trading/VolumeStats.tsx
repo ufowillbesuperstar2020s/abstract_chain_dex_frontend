@@ -3,6 +3,7 @@
 import React from 'react';
 import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
+import { fmtUSD } from '@/utils/fmtUSD';
 
 export default function VolumeStats({ className = '' }) {
   const { volumes } = useTokenMetricsStore();
@@ -12,9 +13,6 @@ export default function VolumeStats({ className = '' }) {
 
   const buys = decimalsReady ? volumes.buys : { count: 0, usd: 0 };
   const sells = decimalsReady ? volumes.sells : { count: 0, usd: 0 };
-
-  const fmtK = (n: number) =>
-    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toFixed(0);
 
   const totalCount = buys.count + sells.count;
 
@@ -27,14 +25,14 @@ export default function VolumeStats({ className = '' }) {
         <div className="flex flex-col">
           <span>Buys</span>
           <span>
-            {buys.count.toLocaleString()} / <span className="text-white">${fmtK(buys.usd)}</span>
+            {buys.count.toLocaleString()} / <span className="text-white">{fmtUSD(buys.usd)}</span>
           </span>
         </div>
 
         <div className="flex flex-col text-right">
           <span>Sells</span>
           <span>
-            {sells.count.toLocaleString()} / <span className="text-white">${fmtK(sells.usd)}</span>
+            {sells.count.toLocaleString()} / <span className="text-white">{fmtUSD(sells.usd)}</span>
           </span>
         </div>
       </div>
