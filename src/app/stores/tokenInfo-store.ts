@@ -5,6 +5,7 @@ import type { TokenMetadata } from '@/types/api';
 import { fetchTokenMetadataFromApi } from '@/app/actions/token';
 
 type TokenInfoState = {
+  // playing game?
   tokenAddress: string | null;
   tokenMetadata: TokenMetadata | null;
   isLoading: boolean;
