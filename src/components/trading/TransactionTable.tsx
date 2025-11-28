@@ -260,7 +260,7 @@ export default function TransactionTable({ pairAddress }: Props) {
   const counts = { holders: 4, devTokens: 6082 };
   const colClasses = ['w-28', 'w-24', '', 'w-36', 'w-28'] as const;
 
-  // wang_mock_data
+  // wang_mock_data quick
   const holdersData = [
     {
       rank: 1,
