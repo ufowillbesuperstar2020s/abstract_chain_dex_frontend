@@ -1,4 +1,4 @@
-import { bigBaseUnitsToNumber } from '@/utils/bigint';
+import { bigBaseUnitsToNumber } from '@/utils/formatters';
 import { format } from 'date-fns';
 
 export function formatTimestamp(ts: number) {

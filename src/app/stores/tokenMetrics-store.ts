@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { fetchMarketDataFromApi } from '@/app/actions/market';
+import { bigBaseUnitsToNumber } from '@/utils/formatters';
 
 type TradeWindowKey = '_1h' | '_4h' | '_12h' | '_1d';
 
@@ -45,17 +46,6 @@ const toNum = (v: unknown): number | null => {
   if (v == null) return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
-};
-
-const bigBaseUnitsToNumber = (raw: string | null | undefined, decimals: number): number => {
-  if (!raw) return 0;
-  try {
-    const bi = BigInt(raw);
-    const base = BigInt(10) ** BigInt(decimals);
-    return Number(bi / base) + Number(bi % base) / Number(base);
-  } catch {
-    return Number(raw) / Math.pow(10, decimals);
-  }
 };
 
 function computeVolumes(metrics: TokenMetrics | null, decimals: number): Volumes {
