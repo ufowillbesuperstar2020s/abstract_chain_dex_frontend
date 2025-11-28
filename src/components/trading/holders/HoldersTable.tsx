@@ -19,12 +19,12 @@ const HoldersTable: React.FC<Props> = ({ holders }) => {
     <table className="w-full table-fixed text-sm">
       <thead>
         <tr className="border-b border-white/10 text-white/40">
-          <th className="w-[80px] py-3 text-left">Rank</th>
-          <th className="w-auto py-3 text-left">Holder</th>
-          <th className="py-3 text-left">Amount</th>
-          <th className="py-3 text-left">Balance (%)</th>
-          <th className="py-3 text-left">Value</th>
-          <th className="py-3 text-left">Activity (Last Seen)</th>
+          <th className="w-[80px] py-3 text-left font-medium">Rank</th>
+          <th className="w-auto py-3 text-left font-medium">Holder</th>
+          <th className="py-3 text-left font-medium">Amount</th>
+          <th className="py-3 text-left font-medium">Balance (%)</th>
+          <th className="py-3 text-left font-medium">Value</th>
+          <th className="py-3 text-left font-medium">Activity (Last Seen)</th>
         </tr>
       </thead>
 
