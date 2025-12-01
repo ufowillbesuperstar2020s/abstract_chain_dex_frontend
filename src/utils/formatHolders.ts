@@ -1,12 +1,9 @@
-// src/utils/formatHolders.ts
-
 import { bigBaseUnitsToNumber, formatUsd } from '@/utils/formatters';
 
 export type RawHolder = {
   wallet_address: string;
   remaining: string;
   updated_at: number;
-  // other fields exist but we don't care for the table
 };
 
 export type UiHolder = {
@@ -30,7 +27,6 @@ function formatHolderTimestamp(tsSec: number): string {
   const mi = String(d.getMinutes()).padStart(2, '0');
   const ss = String(d.getSeconds()).padStart(2, '0');
 
-  // 05-17-2025  |  18:21:53
   return `${mm}-${dd}-${yyyy}  |  ${hh}:${mi}:${ss}`;
 }
 

@@ -1,4 +1,3 @@
-// src/app/actions/holders.ts
 'use server';
 
 import axios, { AxiosResponse } from 'axios';
@@ -9,7 +8,6 @@ const HOLDERS_API_BASE =
   process.env.LOOTER_HOLDERS_API_BASE ??
   process.env.LOOTER_API_BASE ??
   process.env.NEXT_PUBLIC_API_BASE ??
-  // fallback – you can change this to your 160.202.131.23:8081 base
   'https://server23.looter.ai/evm-chart-api/';
 
 export async function fetchHoldersFromApi(tokenAddress: string): Promise<RawHolder[]> {
@@ -19,7 +17,6 @@ export async function fetchHoldersFromApi(tokenAddress: string): Promise<RawHold
 
   try {
     const url = `${HOLDERS_API_BASE}/api/info/holders/${tokenAddress}`;
-    console.log('wang_url', url);
     const res: AxiosResponse<RawHolder[]> = await axios.get(url);
 
     if (res.status !== StatusCodes.OK) {

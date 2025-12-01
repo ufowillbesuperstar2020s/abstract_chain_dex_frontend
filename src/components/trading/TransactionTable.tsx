@@ -271,7 +271,6 @@ export default function TransactionTable({ pairAddress }: Props) {
   const tokenMeta = useTokenInfoStore((s) => s.tokenMetadata);
   const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
   const metrics = useTokenMetricsStore((s) => s.metrics);
-  const metricsLoading = useTokenMetricsStore((s) => s.isLoading);
 
   useEffect(() => {
     setHolders([]);
@@ -295,7 +294,6 @@ export default function TransactionTable({ pairAddress }: Props) {
         setHoldersError(null);
 
         const raw = await fetchHoldersFromApi(tokenAddress);
-        console.log('wang_cancelled', cancelled);
         if (cancelled) return;
 
         const formatted = transformHoldersToUi(
@@ -305,9 +303,6 @@ export default function TransactionTable({ pairAddress }: Props) {
           metrics.usdPrice!,
           tokenMeta.symbol ?? 'TOKEN'
         );
-
-        console.log('wang_formatted', formatted);
-
         if (!cancelled) setHolders(formatted);
       } catch (error) {
         if (!cancelled) {

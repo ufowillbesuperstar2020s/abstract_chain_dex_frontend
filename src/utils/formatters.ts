@@ -1,5 +1,3 @@
-// src/utils/formatters.ts
-
 /**
  * Convert big base-unit string (wei-style) into a JS number.
  */
