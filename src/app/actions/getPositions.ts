@@ -1,5 +1,3 @@
-'use server';
-
 import axios from 'axios';
 import { StatusCodes } from 'http-status-codes';
 
@@ -23,11 +21,21 @@ export async function fetchPositionsFromApi(wallet: string) {
       status: res.status,
       data: res.data
     };
-  } catch (e: any) {
-    console.error('fetchPositionsFromApi error:', e?.message);
+  } catch (e: unknown) {
+    let status = StatusCodes.INTERNAL_SERVER_ERROR;
+
+    if (axios.isAxiosError(e)) {
+      status = e.response?.status ?? StatusCodes.INTERNAL_SERVER_ERROR;
+      console.error('fetchPositionsFromApi error:', e.message);
+    } else if (e instanceof Error) {
+      console.error('fetchPositionsFromApi error:', e.message);
+    } else {
+      console.error('fetchPositionsFromApi unknown error:', e);
+    }
+
     return {
       ok: false,
-      status: e?.response?.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
+      status,
       data: []
     };
   }

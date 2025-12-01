@@ -24,12 +24,22 @@ export async function getSwapQuote(payload: SwapQuotePayload) {
       ok: true,
       data: res.data
     };
-  } catch (err: any) {
-    console.error('Swap quote error:', err.response?.data || err.message);
+  } catch (e: unknown) {
+    let status = StatusCodes.INTERNAL_SERVER_ERROR;
+
+    if (axios.isAxiosError(e)) {
+      status = e.response?.status ?? StatusCodes.INTERNAL_SERVER_ERROR;
+      console.error('fetchPositionsFromApi error:', e.message);
+    } else if (e instanceof Error) {
+      console.error('fetchPositionsFromApi error:', e.message);
+    } else {
+      console.error('fetchPositionsFromApi unknown error:', e);
+    }
 
     return {
       ok: false,
-      error: err.response?.data || err.message
+      status,
+      data: []
     };
   }
 }

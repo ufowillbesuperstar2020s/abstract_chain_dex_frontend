@@ -15,8 +15,6 @@ import PairFiltersDrawer from '@/components/explore/PairFiltersDrawer';
 import { PairFilters, emptyPairFilters, countActiveFilters } from '@/utils/pairFilters';
 import { fetchPairListFromApi } from '@/app/actions/pairs';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://server23.looter.ai/evm-chart-api/';
-
 // ========= layout constants =========
 const APP_HEADER_H = 72; // px — height of the global fixed header
 const FOOTER_H = 72; // px — height of the FixedFooter
