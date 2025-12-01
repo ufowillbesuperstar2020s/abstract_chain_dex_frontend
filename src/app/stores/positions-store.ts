@@ -1,11 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import axios, { AxiosResponse } from 'axios';
-import { StatusCodes } from 'http-status-codes';
 import { fetchPositionsFromApi } from '@/app/actions/getPositions';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
 export type ApiPosition = {
   balance: string;

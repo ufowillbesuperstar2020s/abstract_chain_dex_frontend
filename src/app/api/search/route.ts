@@ -21,7 +21,13 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true, data });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error?.message ?? 'Internal server error' }, { status: 500 });
+  } catch (error: unknown) {
+    let message = 'Internal server error';
+
+    if (error instanceof Error) {
+      message = error.message;
+    }
+
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

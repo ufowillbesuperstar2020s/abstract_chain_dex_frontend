@@ -1,8 +1,7 @@
 'use client';
 
 import TradeInterface from '../shared/TradeInterface';
-import type { AbstractSwapResult } from '@/types/api';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { useAccount, useSendTransaction } from 'wagmi';
 import { parseEther } from 'viem';
 import { useTradeSettingsStore } from '@/app/stores/tradeSettings-store';
@@ -18,8 +17,6 @@ type AbstractSwapRequest = {
   is_sell: boolean;
   slippage: number;
 };
-
-const API_SWAP = process.env.NEXT_PUBLIC_API_SWAP ?? 'https://server23.looter.ai/abs-swap-api';
 
 export default function Buy() {
   const { address } = useAccount();

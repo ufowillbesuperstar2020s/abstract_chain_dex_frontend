@@ -33,6 +33,13 @@ export type TokenSearchItem = {
   avatarUrl?: string;
 };
 
+interface TokenSearchModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onPick: (item: TokenSearchItem) => void;
+  initialQuery?: string;
+}
+
 /* ---- Utils ---- */
 function useDebounce<T>(value: T, ms = 200) {
   const [v, setV] = useState(value);
@@ -93,7 +100,7 @@ function toItem(p: PairDTO): TokenSearchItem {
 }
 
 /* ---- Modal ---- */
-export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery = '' }: any) {
+export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery = '' }: TokenSearchModalProps) {
   const router = useRouter();
 
   const [q, setQ] = useState(initialQuery);
@@ -300,7 +307,14 @@ export default function TokenSearchModal({ isOpen, onClose, onPick, initialQuery
 }
 
 /* ---- Row ---- */
-function ResultRow({ item, active, onClick }: any) {
+interface ResultRowProps {
+  item: TokenSearchItem;
+  active: boolean;
+  onClick: () => void;
+}
+
+/* ---- Row ---- */
+function ResultRow({ item, active, onClick }: ResultRowProps) {
   const abbrev = (addr?: string) =>
     !addr || addr.length <= 10 ? (addr ?? '—') : `${addr.slice(0, 4)}...${addr.slice(-4)}`;
 

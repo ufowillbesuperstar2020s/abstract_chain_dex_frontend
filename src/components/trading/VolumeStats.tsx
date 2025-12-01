@@ -5,7 +5,14 @@ import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
 import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
 import { fmtUSD } from '@/utils/fmtUSD';
 
-export default function VolumeStats({ className = '' }) {
+export type VolumeWindow = '1h' | '4h' | '12h' | '1d';
+
+interface VolumeStatsProps {
+  timeframe: VolumeWindow;
+  className?: string;
+}
+
+export default function VolumeStats({ className }: VolumeStatsProps) {
   const { volumes } = useTokenMetricsStore();
   const { tokenMetadata, isLoading } = useTokenInfoStore();
 

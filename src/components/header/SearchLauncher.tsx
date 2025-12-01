@@ -52,7 +52,7 @@ export default function SearchLauncher() {
       </button>
 
       {/* modal */}
-      <TokenSearchModal isOpen={isOpen} onClose={closeModal} initialQuery="" />
+      <TokenSearchModal isOpen={isOpen} onClose={closeModal} onPick={() => {}} initialQuery="" />
     </>
   );
 }
