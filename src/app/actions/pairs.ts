@@ -42,8 +42,17 @@ export async function fetchPairListFromApi(params: PairListParams) {
     }
 
     return res.data;
-  } catch (error: any) {
-    console.error('Error fetching pair list:', error.response?.data || error.message);
+  } catch (err: unknown) {
+    let message = 'Unknown error';
+    if (axios.isAxiosError(err)) {
+      message = err.response?.data ?? err.message;
+      console.error('Swap quote error:', message);
+    } else if (err instanceof Error) {
+      message = err.message;
+      console.error('Swap quote error:', message);
+    } else {
+      console.error('Swap quote unknown error:', err);
+    }
     return null;
   }
 }

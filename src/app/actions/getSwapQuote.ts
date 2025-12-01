@@ -26,7 +26,6 @@ export async function getSwapQuote(payload: SwapQuotePayload) {
     };
   } catch (err: unknown) {
     let message = 'Unknown error';
-
     if (axios.isAxiosError(err)) {
       message = err.response?.data ?? err.message;
       console.error('Swap quote error:', message);

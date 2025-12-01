@@ -24,8 +24,19 @@ export async function fetchHoldersFromApi(tokenAddress: string): Promise<RawHold
     }
 
     return res.data ?? [];
-  } catch (error: any) {
-    console.error('Error fetching holders:', error?.response?.data || error?.message);
+  } catch (error: unknown) {
+    let message = 'Unknown error occurred';
+
+    if (axios.isAxiosError(error)) {
+      message = error.response?.data ?? error.message;
+      console.error('Error fetching holders:', message);
+    } else if (error instanceof Error) {
+      message = error.message;
+      console.error('Error fetching holders:', message);
+    } else {
+      console.error('Error fetching holders (non-error type):', error);
+    }
+
     return [];
   }
 }
