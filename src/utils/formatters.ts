@@ -1,3 +1,20 @@
+// src/utils/formatters.ts
+
+/**
+ * Convert big base-unit string (wei-style) into a JS number.
+ */
+export function bigBaseUnitsToNumber(raw: string | null | undefined, decimals: number): number {
+  if (!raw) return 0;
+  try {
+    const bi = BigInt(raw);
+    const base = BigInt(10) ** BigInt(decimals);
+    return Number(bi / base) + Number(bi % base) / Number(base);
+  } catch {
+    // Fallback for non-BigInt-safe strings
+    return Number(raw) / Math.pow(10, decimals);
+  }
+}
+
 /**
  * Format raw ETH (or other token) balance to a string with given decimals.
  */
@@ -18,18 +35,4 @@ export function formatUsd(value: number, maxFraction = 0): string {
     currency: 'USD',
     maximumFractionDigits: maxFraction
   });
-}
-
-/**
- * Format raw token balance (bigint string) into a JS number.
- */
-export function bigBaseUnitsToNumber(raw: string | null | undefined, decimals: number): number {
-  if (!raw) return 0;
-  try {
-    const bi = BigInt(raw);
-    const base = BigInt(10) ** BigInt(decimals);
-    return Number(bi / base) + Number(bi % base) / Number(base);
-  } catch {
-    return Number(raw) / Math.pow(10, decimals);
-  }
 }

@@ -10,6 +10,10 @@ import HoldersTable from '@/components/trading/holders/HoldersTable';
 import { subscribeTradesStream } from '@/utils/trades-stream';
 import type { Transaction } from '@/types/trades';
 import { useAccount } from 'wagmi';
+import { transformHoldersToUi, type UiHolder } from '@/utils/formatHolders';
+import { useTokenInfoStore } from '@/app/stores/tokenInfo-store';
+import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
+import { fetchHoldersFromApi } from '@/app/actions/holders';
 
 interface Props {
   pairAddress: string;
@@ -260,25 +264,65 @@ export default function TransactionTable({ pairAddress }: Props) {
   const counts = { holders: 4, devTokens: 6082 };
   const colClasses = ['w-28', 'w-24', '', 'w-36', 'w-28'] as const;
 
-  // wang_mock_data quick
-  const holdersData = [
-    {
-      rank: 1,
-      wallet: '0x75Ff...84901',
-      amount: '8,500,000 BELA',
-      balance: '8.50%',
-      value: '$1,275,000',
-      last_activity_time: '05-17-2025  |  18:21:53'
-    },
-    {
-      rank: 2,
-      wallet: '0x9D23...ACc1E',
-      amount: '5,210,000 BELA',
-      balance: '5.21%',
-      value: '$795,000',
-      last_activity_time: '05-17-2025  |  20:20:23'
-    }
-  ];
+  const [holders, setHolders] = React.useState<UiHolder[]>([]);
+  const [holdersLoading, setHoldersLoading] = React.useState(false);
+  const [holdersError, setHoldersError] = React.useState<string | null>(null);
+
+  const tokenMeta = useTokenInfoStore((s) => s.tokenMetadata);
+  const tokenAddress = useTokenInfoStore((s) => s.tokenAddress);
+  const metrics = useTokenMetricsStore((s) => s.metrics);
+  const metricsLoading = useTokenMetricsStore((s) => s.isLoading);
+
+  useEffect(() => {
+    setHolders([]);
+    setHoldersError(null);
+  }, [pairAddress]);
+
+  useEffect(() => {
+    if (activeTab !== 'holders') return;
+    if (!tokenAddress) return;
+    if (!tokenMeta || tokenMeta.decimals == null) return;
+    if (!metrics || metrics.supplyHuman == null || metrics.usdPrice == null) return;
+
+    // Already loaded? Do nothing.
+    if (holders.length > 0) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setHoldersLoading(true);
+        setHoldersError(null);
+
+        const raw = await fetchHoldersFromApi(tokenAddress);
+        console.log('wang_cancelled', cancelled);
+        if (cancelled) return;
+
+        const formatted = transformHoldersToUi(
+          raw,
+          tokenMeta.decimals!,
+          metrics.supplyHuman!,
+          metrics.usdPrice!,
+          tokenMeta.symbol ?? 'TOKEN'
+        );
+
+        console.log('wang_formatted', formatted);
+
+        if (!cancelled) setHolders(formatted);
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to load holders:', error);
+          setHoldersError('Failed to load holders');
+        }
+      } finally {
+        if (!cancelled) setHoldersLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, tokenAddress, tokenMeta?.decimals, tokenMeta?.symbol, metrics?.supplyHuman, metrics?.usdPrice]);
 
   return (
     // The component is a column: tabs fixed; ONLY the table scroller scrolls.
@@ -481,8 +525,24 @@ export default function TransactionTable({ pairAddress }: Props) {
           </div>
         )}
         {activeTab === 'holders' && (
-          <div id="tab-panel-holders" role="tabpanel" className="h-full overflow-auto p-6 text-white/60">
-            <HoldersTable holders={holdersData} />
+          <div
+            id="tab-panel-holders"
+            role="tabpanel"
+            className="no-scrollbar h-full min-h-0 overflow-x-auto overflow-y-auto text-white/60"
+          >
+            <HoldersTable
+              holders={holders}
+              loading={
+                holdersLoading ||
+                !tokenAddress ||
+                !tokenMeta ||
+                tokenMeta.decimals == null ||
+                !metrics ||
+                metrics.supplyHuman == null ||
+                metrics.usdPrice == null
+              }
+              error={holdersError}
+            />
           </div>
         )}
       </div>
