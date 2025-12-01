@@ -7,6 +7,8 @@ import { useTokenMetricsStore } from '@/app/stores/tokenMetrics-store';
 import { IntervalDropdownUI, type Interval } from './IntervalDropdownUI';
 import { getCachedLogo, setCachedLogo } from '@/utils/token_logo/localLogoCache';
 import { getDexLogosForTokens } from '@/utils/token_logo/dexScreenerLogos';
+import { copyToClipboard } from '@/utils/copyToClipboard';
+import Toast from '@/components/ui/toast/Toast';
 
 function compact(n: number | null): string {
   if (n == null || !Number.isFinite(n)) return '—';
@@ -121,6 +123,8 @@ export default function TokenDataContainer({
   const supplyDisp = loading ? '—' : compact(metrics?.supplyHuman ?? null);
   const marketCapDisp = loading ? '—' : usd(marketCap);
 
+  const [toast, setToast] = React.useState(false);
+
   return (
     <div className="relative">
       <div className="flex items-center rounded-xl bg-[rgba(119,136,159,0.16)] backdrop-blur-[111px]">
@@ -143,6 +147,20 @@ export default function TokenDataContainer({
                   <h3 className="max-w-[220px] truncate text-lg leading-tight text-gray-500 dark:text-gray-400">
                     {tokenMeta?.token_name ?? '—'}
                   </h3>
+                  {/* copy button */}
+                  {tokenMeta?.address && (
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const ok = await copyToClipboard(tokenMeta?.address);
+                        if (ok) setToast(true);
+                      }}
+                      className="flex items-center rounded-md p-1 transition hover:bg-white/10"
+                    >
+                      <Image src="/images/icons/copy.svg" width={16} height={16} alt="copy" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Marketcap */}
@@ -163,6 +181,8 @@ export default function TokenDataContainer({
           <IntervalDropdownUI initial={interval} onChange={onIntervalChange} />
         </div>
       </div>
+
+      <Toast message="Address copied to clipboard" show={toast} onClose={() => setToast(false)} />
 
       <style jsx>{`
         .no-scrollbar::-webkit-scrollbar {
