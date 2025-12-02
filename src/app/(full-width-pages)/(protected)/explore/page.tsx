@@ -144,6 +144,8 @@ function ExplorePageInner() {
   // Keep header/body columns perfectly aligned
   const COL_WIDTHS = ['3%', '20%', '9%', '10%', '10%', '10%', '10%', '10%', '10%', '10%'];
 
+  const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'wss://server23.looter.ai/evm-chart-ws/';
+
   const handlePageSizeChange = (newLimit: number) => {
     setLimit(newLimit);
     setIndex(0);
@@ -270,6 +272,24 @@ function ExplorePageInner() {
   React.useEffect(() => {
     fetchPairs();
   }, [fetchPairs]);
+
+  React.useEffect(() => {
+    if (rows.length === 0) return;
+
+    const pairAddresses = rows.map((r) => r.pair_address);
+
+    const unsubscribe = subscribePairsStream({
+      wsUrl: WS_URL,
+      chainId: 2741,
+      pairs: pairAddresses,
+      onMessage: (msg) => {
+        // msg contains updated fields (price, liquidity, etc)
+        usePairsStore.getState().updatePair(msg);
+      }
+    });
+
+    return unsubscribe;
+  }, [rows]);
 
   // derived (filter + sort)
   const filtered = React.useMemo(() => {

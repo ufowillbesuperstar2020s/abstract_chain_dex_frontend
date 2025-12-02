@@ -7,7 +7,7 @@ import { useTradesStore } from '@/app/stores/trades-store';
 import Spinner from '@/components/ui/Spinner';
 import PositionsTable from '@/components/trading/PositionsTable';
 import HoldersTable from '@/components/trading/holders/HoldersTable';
-import { subscribeTradesStream } from '@/utils/trades-stream';
+import { subscribeTradesStream } from '@/utils/websocket_stream/trades-stream';
 import type { Transaction } from '@/types/trades';
 import { useAccount } from 'wagmi';
 import { transformHoldersToUi, type UiHolder } from '@/utils/formatHolders';
