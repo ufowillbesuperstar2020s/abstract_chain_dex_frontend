@@ -24,21 +24,39 @@ type PairActions = {
 export const usePairsStore = create<PairState & PairActions>((set, get) => ({
   pairs: {},
 
+  // 🔥 KEEP iconUrl and all UI fields on initial hydration
   setInitialPairs: (rows) =>
-    set({
-      pairs: Object.fromEntries(rows.map((r) => [r.pair_address, r]))
+    set((state) => {
+      const newPairs = { ...state.pairs };
+
+      for (const r of rows) {
+        const prev = state.pairs[r.pair_address];
+
+        newPairs[r.pair_address] = {
+          ...(prev ?? {}),
+          ...r, // includes iconUrl
+          iconUrl: r.iconUrl // 🔥 force logo value
+        };
+      }
+
+      return { pairs: newPairs };
     }),
 
+  // 🔥 DO NOT overwrite iconUrl during realtime updates
   updatePair: (incoming: PairRealtimeUpdate) =>
     set((state) => {
       const prev = state.pairs[incoming.pair_address];
       if (!prev) return state;
+
       return {
         pairs: {
           ...state.pairs,
           [incoming.pair_address]: {
             ...prev,
-            ...incoming
+            ...incoming,
+
+            // 🔥 always preserve existing iconUrl
+            iconUrl: prev.iconUrl
           }
         }
       };
