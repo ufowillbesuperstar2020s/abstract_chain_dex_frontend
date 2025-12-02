@@ -1,7 +1,6 @@
 export type WebSocketStreamArgs<TMessage = unknown> = {
   wsUrl: string;
   subscribeMessage: unknown;
-  /** Optional: some streams may not need an explicit unsubscribe message */
   unsubscribeMessage?: unknown;
   onData?: (msg: TMessage) => void;
 };
@@ -32,9 +31,7 @@ export function createWebSocketStream<TMessage = unknown>({
       if (unsubscribeMessage != null) {
         ws.send(JSON.stringify(unsubscribeMessage));
       }
-    } catch {
-      // ignore send errors on close
-    }
+    } catch {}
     ws.close();
   };
 

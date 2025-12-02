@@ -255,7 +255,6 @@ function ExplorePageInner() {
           const logoMap = await getDexLogosForTokens(addrs);
           rowsWithLogos = mapped.map((row) => {
             const logo = logoMap[row.token_address.toLowerCase()];
-            console.log('wang_logo', logo);
             return logo ? { ...row, iconUrl: logo } : row; // fallback to default icon
           });
         } catch (e) {
@@ -263,7 +262,7 @@ function ExplorePageInner() {
         }
       }
 
-      // usePairsStore.getState().setInitialPairs(mapped);
+      usePairsStore.getState().setInitialPairs(rowsWithLogos);
       setRows(rowsWithLogos);
     } catch (e: unknown) {
       setError((e as Error)?.message ?? 'Failed to load');

@@ -68,16 +68,13 @@ export function subscribeTradesStream<TSubMsg = unknown, TUnsubMsg = unknown, TM
 
   socket.addEventListener('message', handleMessage);
 
-  // cleanup
   return () => {
     socket.removeEventListener('message', handleMessage);
 
     if (typeof makeUnsubscribeMsg === 'function') {
       try {
         socket.send(JSON.stringify(makeUnsubscribeMsg(pairAddress)));
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
   };
 }
