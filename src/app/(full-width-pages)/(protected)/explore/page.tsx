@@ -15,6 +15,8 @@ import PairFiltersDrawer from '@/components/explore/PairFiltersDrawer';
 import { PairFilters, emptyPairFilters, countActiveFilters } from '@/utils/pairFilters';
 import { fetchPairListFromApi } from '@/app/actions/pairs';
 
+import { usePairsStore, type PairRealtimeUpdate } from '@/app/stores/pairs-store';
+import { subscribePairsStream } from '@/utils/websocket_stream/pairs-stream';
 // ========= layout constants =========
 const APP_HEADER_H = 72; // px — height of the global fixed header
 const FOOTER_H = 72; // px — height of the FixedFooter
@@ -260,6 +262,7 @@ function ExplorePageInner() {
         }
       }
 
+      usePairsStore.getState().setInitialPairs(mapped);
       setRows(rowsWithLogos);
     } catch (e: unknown) {
       setError((e as Error)?.message ?? 'Failed to load');
@@ -276,20 +279,25 @@ function ExplorePageInner() {
   React.useEffect(() => {
     if (rows.length === 0) return;
 
-    const pairAddresses = rows.map((r) => r.pair_address);
+    const addresses = rows.map((r) => r.pair_address);
 
     const unsubscribe = subscribePairsStream({
       wsUrl: WS_URL,
       chainId: 2741,
-      pairs: pairAddresses,
-      onMessage: (msg) => {
-        // msg contains updated fields (price, liquidity, etc)
-        usePairsStore.getState().updatePair(msg);
+      pairs: addresses,
+      onMessage: (update: PairRealtimeUpdate) => {
+        usePairsStore.getState().updatePair(update);
       }
     });
 
     return unsubscribe;
   }, [rows]);
+
+  const pairMap = usePairsStore((s) => s.pairs);
+
+  React.useEffect(() => {
+    setRows(Object.values(pairMap));
+  }, [pairMap]);
 
   // derived (filter + sort)
   const filtered = React.useMemo(() => {
