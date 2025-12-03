@@ -22,7 +22,6 @@ const APP_HEADER_H = 72; // px — height of the global fixed header
 const FOOTER_H = 72; // px — height of the FixedFooter
 const FOOTER_SAFE = FOOTER_H + 28;
 
-// ---------- types from UI ----------
 type TimeRange = '1h' | '4h' | '12h' | '24h';
 
 type TokenRow = {
