@@ -1,20 +1,35 @@
 export type WebSocketStreamArgs<TMessage = unknown> = {
   wsUrl: string;
-  subscribeMessage: unknown;
-  unsubscribeMessage?: unknown;
   onData?: (msg: TMessage) => void;
+};
+
+export type WebSocketStream<TMessage = unknown> = {
+  send: (message: unknown) => void;
+  close: () => void;
+  getState: () => number;
 };
 
 export function createWebSocketStream<TMessage = unknown>({
   wsUrl,
-  subscribeMessage,
-  unsubscribeMessage,
   onData
-}: WebSocketStreamArgs<TMessage>) {
+}: WebSocketStreamArgs<TMessage>): WebSocketStream<TMessage> {
   const ws = new WebSocket(wsUrl);
 
+  // Queue messages while the socket is connecting so callers can
+  // freely call send() before the connection is fully open.
+  const pendingMessages: string[] = [];
+
+  const flushQueue = () => {
+    if (ws.readyState === WebSocket.OPEN && pendingMessages.length > 0) {
+      for (const msg of pendingMessages) {
+        ws.send(msg);
+      }
+      pendingMessages.length = 0;
+    }
+  };
+
   ws.onopen = () => {
-    ws.send(JSON.stringify(subscribeMessage));
+    flushQueue();
   };
 
   ws.onmessage = (ev: MessageEvent) => {
@@ -26,14 +41,28 @@ export function createWebSocketStream<TMessage = unknown>({
     }
   };
 
-  const unsubscribe = () => {
-    try {
-      if (unsubscribeMessage != null) {
-        ws.send(JSON.stringify(unsubscribeMessage));
-      }
-    } catch {}
-    ws.close();
+  const send = (message: unknown) => {
+    const payload = typeof message === 'string' ? message : JSON.stringify(message);
+
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(payload);
+    } else if (ws.readyState === WebSocket.CONNECTING) {
+      pendingMessages.push(payload);
+    } else {
+      // CLOSED or CLOSING – ignore or log, but don't throw
+      console.warn('Attempted to send on a closed WebSocket');
+    }
   };
 
-  return unsubscribe;
+  const close = () => {
+    try {
+      ws.close();
+    } catch {
+      // ignore
+    }
+  };
+
+  const getState = () => ws.readyState;
+
+  return { send, close, getState };
 }
