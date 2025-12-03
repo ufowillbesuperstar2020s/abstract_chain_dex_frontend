@@ -298,4 +298,252 @@ function ExplorePageInner() {
   // Update pair subscriptions whenever the visible rows change
   React.useEffect(() => {
     if (!wsRef.current) return;
-    const addresses =
+    const addresses = rows.map((r) => r.pair_address);
+    wsRef.current.updatePairs(addresses);
+  }, [rows]);
+
+  const pairMap = usePairsStore((s) => s.pairs);
+
+  React.useEffect(() => {
+    setRows(Object.values(pairMap));
+  }, [pairMap]);
+
+  // derived (filter + sort)
+  const filtered = React.useMemo(() => {
+    let r = rows;
+    if (showFavorites) r = r.filter((x) => favorites.has(x.pair_address));
+
+    type NumericSortKey = Exclude<SortKey, 'symbol'>;
+    const getSortVal = (row: TokenRow, key: SortKey): number | string =>
+      key === 'symbol' ? row.symbol : row[key as NumericSortKey];
+
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    return [...r].sort((a, b) => {
+      const av = getSortVal(a, sort.key);
+      const bv = getSortVal(b, sort.key);
+      if (typeof av === 'string' && typeof bv === 'string') return av.localeCompare(bv) * dir;
+      if (typeof av === 'number' && typeof bv === 'number') return (av < bv ? -1 : av > bv ? 1 : 0) * dir;
+      return 0;
+    });
+  }, [rows, showFavorites, favorites, sort]);
+
+  const toggleFav = (addr: string) =>
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(addr)) next.delete(addr);
+      else next.add(addr);
+      return next;
+    });
+
+  const setSortKey = (key: SortKey) =>
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'desc' }));
+
+  const FilterPill = ({
+    active,
+    onClick,
+    children,
+    leftIcon,
+    leftIconActive,
+    activeVariant = 'default'
+  }: {
+    active?: boolean;
+    onClick?: () => void;
+    children: React.ReactNode;
+    leftIcon?: React.ReactNode;
+    leftIconActive?: React.ReactNode;
+    activeVariant?: 'default' | 'green';
+  }) => {
+    const base = 'inline-flex h-8 items-center gap-2 px-3 py-2 text-xs rounded-md transition-colors';
+    const style = active
+      ? activeVariant == 'green'
+        ? 'border border-emerald-500 bg-emerald-500/15 text-emerald-400'
+        : 'border border-white/20 text-white'
+      : 'text-white/50 hover:bg-white/10';
+    return (
+      <button onClick={onClick} className={`${base} ${style}`}>
+        {active ? (leftIconActive ?? leftIcon) : leftIcon}
+        {children}
+      </button>
+    );
+  };
+
+  const TIME_OPTIONS = ['All', '1h', '4h', '12h', '24h'] as const;
+  type TimeOption = (typeof TIME_OPTIONS)[number];
+  const [activeTab, setActiveTab] = useState<TimeOption>('All');
+  const normalize = (r: TimeOption): TimeRange => (r === 'All' ? '24h' : r);
+
+  return (
+    <div
+      className="fixed inset-x-0 bottom-0 mx-auto w-full px-10"
+      style={{
+        top: `${APP_HEADER_H}px`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+        overflow: 'hidden' // prevents whole-page scroll
+      }}
+    >
+      {/* decorative glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed top-1/2 right-0 -z-10 hidden h-[720px] w-[min(800px,30vw)] -translate-y-1/2 bg-gradient-to-l from-emerald-400/25 via-emerald-400/10 to-transparent blur-2xl xl:block"
+      />
+
+      {/* Page header (stays put) */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl text-white/90">Trending</h1>
+
+          {/* Range tabs */}
+          <div className="ml-2 flex items-center gap-1 rounded-xl bg-white/10 p-0.5">
+            {TIME_OPTIONS.map((r) => (
+              <button
+                key={r}
+                onClick={() => {
+                  setActiveTab(r);
+                  setTimeRange(normalize(r));
+                }}
+                className={cx(
+                  'h-6 rounded-md px-4 text-sm',
+                  r === activeTab ? 'bg-emerald-700 text-white' : 'text-white/70 hover:text-white'
+                )}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+
+          <div className="ml-4 hidden items-center gap-2 md:flex">
+            <FilterPill
+              active={sort.key === 'volume24hUsd'}
+              onClick={handleVolumeToggle}
+              activeVariant="green"
+              leftIcon={<Image width={12} height={12} src="/images/icons/volume.svg" alt="Volume" />}
+              leftIconActive={
+                <Image width={12} height={12} src="/images/icons/volume_active.svg" alt="Volume active" />
+              }
+            >
+              Volume
+            </FilterPill>
+            <FilterPill
+              active={showFavorites}
+              onClick={() => setShowFavorites((v) => !v)}
+              activeVariant="green"
+              leftIcon={
+                <svg viewBox="0 0 24 24" className="h-4 w-4">
+                  <path
+                    fill="currentColor"
+                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.59 4.81 14.26 4 16 4 18.5 4 20.5 6 20.5 8.5c0 3.78-3.4 6.86-8.05 11.54L12 21.35z"
+                  />
+                </svg>
+              }
+              leftIconActive={
+                <svg viewBox="0 0 24 24" className="h-4 w-4 drop-shadow-[0_0_6px_rgba(16,185,129,0.7)]">
+                  <path
+                    fill="currentColor"
+                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.59 4.81 14.26 4 16 4 18.5 4 20.5 6 20.5 8.5c0 3.78-3.4 6.86-8.05 11.54L12 21.35z"
+                  />
+                </svg>
+              }
+            >
+              Favorites
+            </FilterPill>
+            <FilterPill
+              active={sort.key === 'ageSeconds' && sort.dir === 'asc'}
+              onClick={handleNewToggle}
+              activeVariant="green"
+              leftIcon={<Image width={12} height={12} src="/images/icons/new.svg" alt="New" />}
+              leftIconActive={<Image width={12} height={12} src="/images/icons/new_active.svg" alt="New" />}
+            >
+              New
+            </FilterPill>
+          </div>
+        </div>
+
+        {/* search + filters */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleToggleFilters}
+            className="hidden h-10 items-center gap-2 rounded-md px-3 text-sm text-white/80 hover:bg-white/15 md:inline-flex"
+            title="Filters"
+          >
+            <Image width={15} height={15} src="/images/icons/filters.svg" alt="Filters" />
+            Filters
+            {activeFilterCount > 0 && <span className="text-emerald-500">({activeFilterCount})</span>}
+          </button>
+        </div>
+      </div>
+
+      {/* Table card: header (static) + body (scroll only here) */}
+      <div className="min-h-0 flex-1 overflow-hidden rounded-2xl">
+        {/* HEADER TABLE (not scrollable) */}
+        <div className="overflow-hidden">
+          <table className="min-w-full border-collapse text-sm">
+            <colgroup>
+              {COL_WIDTHS.map((w, i) => (
+                <col key={`h-${i}`} style={{ width: w }} />
+              ))}
+            </colgroup>
+            <thead className="bg-[#303030]">
+              <tr className="h-11 text-white/90">
+                <th className="pr-2 pl-4 text-left font-medium"> </th>
+                <Th label="Token name" active={sort.key === 'symbol'} />
+                <th> </th>
+                <Th label="Price" onClick={() => setSortKey('priceUsd')} active={sort.key === 'priceUsd'} />
+                <Th label="1h change" onClick={() => setSortKey('change1hPct')} active={sort.key === 'change1hPct'} />
+                <Th
+                  label="12h change"
+                  onClick={() => setSortKey('change12hPct')}
+                  active={sort.key === 'change12hPct'}
+                />
+                <Th
+                  label="24h change"
+                  onClick={() => setSortKey('change24hPct')}
+                  active={sort.key === 'change24hPct'}
+                />
+                <Th
+                  label="24h volume"
+                  onClick={() => setSortKey('volume24hUsd')}
+                  active={sort.key === 'volume24hUsd'}
+                />
+                <Th label="Liquidity" onClick={() => setSortKey('liquidityUsd')} active={sort.key === 'liquidityUsd'} />
+                <Th label="MC" onClick={() => setSortKey('marketcapUsd')} active={sort.key === 'marketcapUsd'} />
+              </tr>
+            </thead>
+          </table>
+        </div>
+
+        {/* BODY TABLE (the ONLY scroller -> scrollbar shows only beside rows) */}
+        <div
+          className="pretty-scroll overflow-x-auto overflow-y-auto"
+          style={{
+            height: `calc(100% - ${FOOTER_SAFE}px)`, // shorten the scrollable area
+            paddingBottom: 8 // a little inner space for the last row
+          }}
+        >
+          <table className="min-w-full border-collapse text-sm">
+            <colgroup>
+              {COL_WIDTHS.map((w, i) => (
+                <col key={`b-${i}`} style={{ width: w }} />
+              ))}
+            </colgroup>
+
+            <tbody className="divide-y divide-white/5">
+              {loading && (
+                <tr>
+                  <td colSpan={10} className="p-6 text-center text-white/60">
+                    Loading pairs…
+                  </td>
+                </tr>
+              )}
+              {!loading && !error && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="p-6 text-center text-white/60">
+                    No items
+                  </td>
+                </tr>
+              )}
+              {error && !loading && (
+                <tr>
+                  <t
