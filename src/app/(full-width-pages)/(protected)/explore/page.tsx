@@ -17,6 +17,8 @@ import { fetchPairListFromApi } from '@/app/actions/pairs';
 
 import { usePairsStore, type PairRealtimeUpdate } from '@/app/stores/pairs-store';
 import { subscribePairsStream, type PairsStreamHandle } from '@/utils/websocket_stream/pairs-stream';
+import type { TokenRow } from '@/types/token-row';
+
 // ========= layout constants =========
 const APP_HEADER_H = 72; // px — height of the global fixed header
 const FOOTER_H = 72; // px — height of the FixedFooter
@@ -24,24 +26,6 @@ const FOOTER_SAFE = FOOTER_H + 28;
 
 // ---------- types from UI ----------
 type TimeRange = '1h' | '4h' | '12h' | '24h';
-
-type TokenRow = {
-  pair_address: string;
-  token_address: string;
-  iconUrl: string;
-  symbol: string;
-  name: string;
-  ageSeconds: number;
-  ageLabel: string;
-  priceUsd: number;
-  change1hPct: number;
-  change12hPct: number;
-  change24hPct: number;
-  decimals: number;
-  volume24hUsd: number;
-  liquidityUsd: number;
-  marketcapUsd: number;
-};
 
 // ---------- API response types ----------
 type ApiPair = {

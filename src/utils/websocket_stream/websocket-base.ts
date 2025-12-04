@@ -4,7 +4,7 @@ export type WebSocketStreamArgs<TMessage = unknown> = {
 };
 
 export type WebSocketStream<TMessage = unknown> = {
-  send: (message: unknown) => void;
+  send: (message: TMessage) => void;
   close: () => void;
   getState: () => number;
 };

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { TokenRow } from '@/types/token-row';
 
 export type PairRealtimeUpdate = {
   pair_address: string;
@@ -13,15 +14,15 @@ export type PairRealtimeUpdate = {
 };
 
 type PairState = {
-  pairs: Record<string, any>;
+  pairs: Record<string, TokenRow>;
 };
 
 type PairActions = {
-  setInitialPairs: (rows: any[]) => void;
+  setInitialPairs: (rows: TokenRow[]) => void;
   updatePair: (update: PairRealtimeUpdate) => void;
 };
 
-export const usePairsStore = create<PairState & PairActions>((set, get) => ({
+export const usePairsStore = create<PairState & PairActions>((set) => ({
   pairs: {},
 
   setInitialPairs: (rows) =>

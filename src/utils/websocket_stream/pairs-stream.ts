@@ -13,10 +13,22 @@ export type PairsStreamHandle = {
   close: () => void;
 };
 
+type PairUpdateMessage = {
+  type: 'PAIR_UPDATE';
+  data: PairRealtimeUpdate;
+};
+
+type IncomingMessage =
+  | PairUpdateMessage
+  | {
+      type: string;
+      data?: unknown;
+    };
+
 export function subscribePairsStream({ wsUrl, chainId, pairs, onMessage }: SubscribePairsArgs): PairsStreamHandle {
-  const stream: WebSocketStream<any> = createWebSocketStream({
+  const stream: WebSocketStream<IncomingMessage> = createWebSocketStream({
     wsUrl,
-    onData: (msg: any) => {
+    onData: (msg: IncomingMessage) => {
       if (msg?.type === 'PAIR_UPDATE') {
         onMessage(msg.data as PairRealtimeUpdate);
       }
