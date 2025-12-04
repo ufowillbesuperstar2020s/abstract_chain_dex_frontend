@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Toast from '@/components/ui/toast/Toast';
@@ -117,31 +117,31 @@ function ExplorePageInner() {
   const initialSortKey = (sp.get('sort') as SortKey) || 'liquidityUsd';
   const initialSortDir = (sp.get('dir') as Sort['dir']) || 'desc';
 
-  const [timeRange, setTimeRange] = React.useState<TimeRange>(initialRange);
-  const [favorites, setFavorites] = React.useState<Set<string>>(new Set());
-  const [showFavorites, setShowFavorites] = React.useState(false);
+  const [timeRange, setTimeRange] = useState<TimeRange>(initialRange);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFavorites, setShowFavorites] = useState(false);
 
-  const [sort, setSort] = React.useState<Sort>({ key: initialSortKey, dir: initialSortDir });
+  const [sort, setSort] = useState<Sort>({ key: initialSortKey, dir: initialSortDir });
 
-  const [rows, setRows] = React.useState<TokenRow[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [index, setIndex] = React.useState(0);
-  const [limit, setLimit] = React.useState(30);
-  const [total, setTotal] = React.useState(0);
+  const [rows, setRows] = useState<TokenRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [index, setIndex] = useState(0);
+  const [limit, setLimit] = useState(30);
+  const [total, setTotal] = useState(0);
 
-  const [toast, setToast] = React.useState(false);
-  const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const [toast, setToast] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // filters actually applied to the API request
-  const [filters, setFilters] = React.useState<PairFilters>(emptyPairFilters);
+  const [filters, setFilters] = useState<PairFilters>(emptyPairFilters);
 
   // local editable draft used inside the drawer, only committed on "Apply"
-  const [filterDraft, setFilterDraft] = React.useState<PairFilters>(emptyPairFilters);
+  const [filterDraft, setFilterDraft] = useState<PairFilters>(emptyPairFilters);
 
-  const wsRef = React.useRef<PairsStreamHandle | null>(null);
+  const wsRef = useRef<PairsStreamHandle | null>(null);
 
-  const activeFilterCount = React.useMemo(() => countActiveFilters(filters), [filters]);
+  const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters]);
 
   const DEFAULT_SORT: Sort = { key: 'liquidityUsd', dir: 'desc' };
 
@@ -225,7 +225,7 @@ function ExplorePageInner() {
   };
 
   // fetcher
-  const fetchPairs = React.useCallback(async () => {
+  const fetchPairs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -274,12 +274,12 @@ function ExplorePageInner() {
     }
   }, [timeRange, index, limit, filters]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchPairs();
   }, [fetchPairs]);
 
   // Create a single persistent WebSocket connection for this page
-  React.useEffect(() => {
+  useEffect(() => {
     wsRef.current = subscribePairsStream({
       wsUrl: WS_URL,
       chainId: 2741,
@@ -296,7 +296,7 @@ function ExplorePageInner() {
   }, [WS_URL]);
 
   // Update pair subscriptions whenever the visible rows change
-  React.useEffect(() => {
+  useEffect(() => {
     if (!wsRef.current) return;
     const addresses = rows.map((r) => r.pair_address);
     wsRef.current.updatePairs(addresses);
@@ -304,12 +304,12 @@ function ExplorePageInner() {
 
   const pairMap = usePairsStore((s) => s.pairs);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setRows(Object.values(pairMap));
   }, [pairMap]);
 
   // derived (filter + sort)
-  const filtered = React.useMemo(() => {
+  const filtered = useMemo(() => {
     let r = rows;
     if (showFavorites) r = r.filter((x) => favorites.has(x.pair_address));
 
