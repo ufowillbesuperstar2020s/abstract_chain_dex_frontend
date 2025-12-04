@@ -293,7 +293,7 @@ function ExplorePageInner() {
       wsRef.current?.close();
       wsRef.current = null;
     };
-  }, [WS_URL]);
+  }, []);
 
   // Update pair subscriptions whenever the visible rows change
   useEffect(() => {

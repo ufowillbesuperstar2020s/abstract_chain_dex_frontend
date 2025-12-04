@@ -80,7 +80,7 @@ export function subscribePairsStream({ wsUrl, chainId, pairs, onMessage }: Subsc
     currentPairs = normalizedNext;
   };
 
-  // send initial subscription (if any)
+  // send initial subscription
   if (pairs.length) {
     updatePairs(pairs);
   }

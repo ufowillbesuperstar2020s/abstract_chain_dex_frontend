@@ -15,8 +15,7 @@ export function createWebSocketStream<TMessage = unknown>({
 }: WebSocketStreamArgs<TMessage>): WebSocketStream<TMessage> {
   const ws = new WebSocket(wsUrl);
 
-  // Queue messages while the socket is connecting so callers can
-  // freely call send() before the connection is fully open.
+  // Queue messages while the socket is connecting so callers can freely call send() before the connection is fully open.
   const pendingMessages: string[] = [];
 
   const flushQueue = () => {
@@ -49,7 +48,6 @@ export function createWebSocketStream<TMessage = unknown>({
     } else if (ws.readyState === WebSocket.CONNECTING) {
       pendingMessages.push(payload);
     } else {
-      // CLOSED or CLOSING – ignore or log, but don't throw
       console.warn('Attempted to send on a closed WebSocket');
     }
   };
@@ -57,9 +55,7 @@ export function createWebSocketStream<TMessage = unknown>({
   const close = () => {
     try {
       ws.close();
-    } catch {
-      // ignore
-    }
+    } catch {}
   };
 
   const getState = () => ws.readyState;
