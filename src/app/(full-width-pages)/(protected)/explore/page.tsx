@@ -262,12 +262,25 @@ function ExplorePageInner() {
     fetchPairs();
   }, [fetchPairs]);
 
-  // Create a single persistent WebSocket connection for this page
+  // Create a WebSocket connection for this page
   useEffect(() => {
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    const resolution = RESOLUTION_FOR[timeRange] ?? '24h';
+
     wsRef.current = subscribePairsStream({
       wsUrl: WS_URL,
       chainId: 2741,
-      pairs: [],
+
+      resolution,
+      index,
+      limit,
+      order_by: 'liquidity desc',
+      filters,
+
       onMessage: (update: PairRealtimeUpdate) => {
         usePairsStore.getState().updatePair(update);
       }
@@ -277,14 +290,7 @@ function ExplorePageInner() {
       wsRef.current?.close();
       wsRef.current = null;
     };
-  }, []);
-
-  // Update pair subscriptions whenever the visible rows change
-  useEffect(() => {
-    if (!wsRef.current) return;
-    const addresses = rows.map((r) => r.pair_address);
-    wsRef.current.updatePairs(addresses);
-  }, [rows]);
+  }, [timeRange, index, limit, filters]);
 
   const pairMap = usePairsStore((s) => s.pairs);
 
