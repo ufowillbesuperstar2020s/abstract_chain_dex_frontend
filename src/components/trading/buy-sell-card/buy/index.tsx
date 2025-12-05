@@ -48,6 +48,8 @@ export default function Buy() {
           slippage: slippage
         };
 
+        console.log('wang_payload', payload);
+
         try {
           const quote = await getSwapQuote(payload);
 
