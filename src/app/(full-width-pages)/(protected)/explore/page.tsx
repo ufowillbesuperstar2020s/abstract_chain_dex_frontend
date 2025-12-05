@@ -216,6 +216,15 @@ function ExplorePageInner() {
 
       const resolution = RESOLUTION_FOR[timeRange] ?? '24h';
 
+      const data = await fetchPairListFromApi({
+        chain_id: 2741,
+        resolution,
+        index,
+        limit,
+        order_by: 'liquidity desc',
+        filters
+      });
+
       if (!data) {
         throw new Error('Failed to load pair list.');
       }
