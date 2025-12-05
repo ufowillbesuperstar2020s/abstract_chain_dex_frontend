@@ -16,13 +16,9 @@ export async function getSwapQuote(payload: SwapQuotePayload) {
   try {
     const url = `${SWAP_API}/quote`;
 
-    console.log('wang_url', url);
-
     const res = await axios.post(url, payload, {
       headers: { 'Content-Type': 'application/json' }
     });
-
-    console.log('wang_res');
 
     return {
       ok: true,
