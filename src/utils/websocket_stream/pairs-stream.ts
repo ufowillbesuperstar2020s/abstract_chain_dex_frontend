@@ -4,107 +4,67 @@ import type { PairRealtimeUpdate } from '@/app/stores/pairs-store';
 export type SubscribePairsArgs = {
   wsUrl: string;
   chainId: number;
-  pairs: string[];
+
+  // NEW PARAMS FOR PING
+  resolution: string;
+  index: number;
+  limit: number;
+  order_by: string;
+  filters: any;
+
   onMessage: (update: PairRealtimeUpdate) => void;
 };
 
 export type PairsStreamHandle = {
-  updatePairs: (pairs: string[]) => void;
+  sendPing: (params: { resolution: string; index: number; limit: number; order_by: string; filters: any }) => void;
+
   close: () => void;
 };
 
-type PairUpdateMessage = {
-  type: 'PAIR_UPDATE';
-  data: PairRealtimeUpdate;
-};
+type IncomingMessage = { type: 'PAIR_UPDATE'; data: PairRealtimeUpdate } | any;
 
-type IncomingMessage =
-  | PairUpdateMessage
-  | {
-      type: string;
-      data?: unknown;
-    };
-
-export function subscribePairsStream({ wsUrl, chainId, pairs, onMessage }: SubscribePairsArgs): PairsStreamHandle {
+export function subscribePairsStream({
+  wsUrl,
+  chainId,
+  resolution,
+  index,
+  limit,
+  order_by,
+  filters,
+  onMessage
+}: SubscribePairsArgs): PairsStreamHandle {
   const stream: WebSocketStream<IncomingMessage> = createWebSocketStream({
     wsUrl,
-    onData: (msg: IncomingMessage) => {
+    onData: (msg) => {
       if (msg?.type === 'PAIR_UPDATE') {
         onMessage(msg.data as PairRealtimeUpdate);
       }
     }
   });
 
-  let currentPairs: string[] = [];
-
-  const sendSubscribe = (next: string[]) => {
-    if (!next.length) return;
+  const sendPing = (params: { resolution: string; index: number; limit: number; order_by: string; filters: any }) => {
     stream.send({
       type: 'SUBSCRIBE_PAIRS',
       data: {
         chain_id: chainId,
-        pairs: next
+        ...params
       }
     });
-  };
-
-  const sendUnsubscribe = (prev: string[]) => {
-    if (!prev.length) return;
-    stream.send({
-      type: 'UNSUBSCRIBE_PAIRS',
-      data: {
-        chain_id: chainId,
-        pairs: prev
-      }
-    });
-  };
-
-  const updatePairs = (nextPairs: string[]) => {
-    const normalizedNext = Array.from(new Set(nextPairs)); // dedupe
-
-    const prevSet = new Set(currentPairs);
-    const nextSet = new Set(normalizedNext);
-
-    const toSubscribe: string[] = [];
-    const toUnsubscribe: string[] = [];
-
-    // new pairs to subscribe
-    for (const p of nextSet) {
-      if (!prevSet.has(p)) {
-        toSubscribe.push(p);
-      }
-    }
-
-    // old pairs to unsubscribe
-    for (const p of prevSet) {
-      if (!nextSet.has(p)) {
-        toUnsubscribe.push(p);
-      }
-    }
-
-    if (toUnsubscribe.length) {
-      sendUnsubscribe(toUnsubscribe);
-    }
-    if (toSubscribe.length) {
-      sendSubscribe(toSubscribe);
-    }
-
-    currentPairs = normalizedNext;
   };
 
   // send initial subscription
-  if (pairs.length) {
-    updatePairs(pairs);
-  }
+  sendPing({ resolution, index, limit, order_by, filters });
 
   const close = () => {
-    if (currentPairs.length) {
-      // best-effort unsubscribe before closing
-      sendUnsubscribe(currentPairs);
-    }
+    stream.send({
+      type: 'UNSUBSCRIBE_PAIRS',
+      data: {
+        chain_id: chainId
+      }
+    });
+
     stream.close();
-    currentPairs = [];
   };
 
-  return { updatePairs, close };
+  return { sendPing, close };
 }
