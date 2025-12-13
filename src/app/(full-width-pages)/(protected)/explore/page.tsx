@@ -274,7 +274,6 @@ function ExplorePageInner() {
     wsRef.current = subscribePairsStream({
       wsUrl: WS_URL,
       chainId: 2741,
-
       resolution,
       index,
       limit,
