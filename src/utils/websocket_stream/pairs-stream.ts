@@ -48,8 +48,11 @@ export function subscribePairsStream({
   const stream: WebSocketStream<IncomingMessage> = createWebSocketStream({
     wsUrl,
     onData: (msg: IncomingMessage) => {
-      if (msg?.type === 'PAIR_UPDATE') {
-        onMessage(msg.data as PairRealtimeUpdate);
+      console.log('wang_msg', msg);
+      if (Array.isArray(msg?.pairs)) {
+        for (const pair of msg.pairs) {
+          onMessage(pair as PairRealtimeUpdate);
+        }
       }
     }
   });
