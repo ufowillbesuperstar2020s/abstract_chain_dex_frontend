@@ -107,7 +107,6 @@ function ExplorePageInner() {
 
   const [sort, setSort] = useState<Sort>({ key: initialSortKey, dir: initialSortDir });
 
-  const [rows, setRows] = useState<TokenRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
@@ -247,12 +246,9 @@ function ExplorePageInner() {
           console.warn('Failed to fetch Dex logos, using default icons only', e);
         }
       }
-
       usePairsStore.getState().setInitialPairs(rowsWithLogos);
-      setRows(rowsWithLogos);
     } catch (e: unknown) {
       setError((e as Error)?.message ?? 'Failed to load');
-      setRows([]);
     } finally {
       setLoading(false);
     }
@@ -293,8 +289,8 @@ function ExplorePageInner() {
 
   const pairMap = usePairsStore((s) => s.pairs);
 
-  useEffect(() => {
-    setRows(Object.values(pairMap));
+  const rows = useMemo(() => {
+    return Object.values(pairMap);
   }, [pairMap]);
 
   // derived (filter + sort)

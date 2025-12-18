@@ -74,9 +74,3 @@ export const usePairsStore = create<PairState & PairActions>((set) => ({
       };
     })
 }));
-
-usePairsStore.subscribe((state) => {
-  console.log('[PAIRS STORE UPDATED]');
-  console.log('size:', Object.keys(state.pairs).length);
-  console.log('sample:', Object.values(state.pairs)[0]);
-});
