@@ -33,7 +33,12 @@ type PairUpdateMessage = {
   data: PairRealtimeUpdate;
 };
 
-type IncomingMessage = PairUpdateMessage | any;
+type PairsUpdatePayload = {
+  pairs?: PairRealtimeUpdate[];
+  [key: string]: unknown;
+};
+
+type IncomingMessage = PairUpdateMessage | PairsUpdatePayload;
 
 export function subscribePairsStream({
   wsUrl,
@@ -48,9 +53,9 @@ export function subscribePairsStream({
   const stream: WebSocketStream<IncomingMessage> = createWebSocketStream({
     wsUrl,
     onData: (msg: IncomingMessage) => {
-      if (Array.isArray(msg?.pairs)) {
+      if ('pairs' in msg && Array.isArray(msg.pairs)) {
         for (const pair of msg.pairs) {
-          onMessage(pair as PairRealtimeUpdate);
+          onMessage(pair);
         }
       }
     }
