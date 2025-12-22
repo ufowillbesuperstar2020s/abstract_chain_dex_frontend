@@ -9,6 +9,7 @@ export type PairFilters = {
   age_max?: string;
   holders_min?: string;
   holders_max?: string;
+  is_new?: boolean;
 };
 
 export const emptyPairFilters: PairFilters = {};

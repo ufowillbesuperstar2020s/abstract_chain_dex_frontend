@@ -122,6 +122,8 @@ function ExplorePageInner() {
   // local editable draft used inside the drawer, only committed on "Apply"
   const [filterDraft, setFilterDraft] = useState<PairFilters>(emptyPairFilters);
 
+  const [isNew, setIsNew] = useState(false);
+
   const wsRef = useRef<PairsStreamHandle | null>(null);
 
   const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters]);
@@ -146,6 +148,9 @@ function ExplorePageInner() {
   };
 
   const handleNewToggle = () => {
+    setIsNew((v) => !v);
+    setIndex(0);
+
     setSort((s) => (s.key === 'ageSeconds' && s.dir === 'asc' ? DEFAULT_SORT : { key: 'ageSeconds', dir: 'asc' }));
   };
 
@@ -171,6 +176,13 @@ function ExplorePageInner() {
     setFilterDraft(emptyPairFilters);
     setIndex(0);
   };
+
+  const effectiveFilters = useMemo(() => {
+    return {
+      ...filters,
+      ...(isNew ? { is_new: true } : {})
+    };
+  }, [filters, isNew]);
 
   // map API -> UI row
   const mapPair = (p: ApiPair): TokenRow => {
@@ -221,7 +233,7 @@ function ExplorePageInner() {
         index,
         limit,
         order_by: 'liquidity desc',
-        filters
+        filters: effectiveFilters
       });
 
       if (!data) {
@@ -252,7 +264,7 @@ function ExplorePageInner() {
     } finally {
       setLoading(false);
     }
-  }, [timeRange, index, limit, filters]);
+  }, [timeRange, index, limit, effectiveFilters]);
 
   useEffect(() => {
     fetchPairs();
