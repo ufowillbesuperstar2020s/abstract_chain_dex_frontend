@@ -35,8 +35,6 @@ export async function fetchPairListFromApi(params: PairListParams) {
 
     const url = `${API_BASE}/api/info/pair/list?${query}`;
 
-    console.log('wang_url', url);
-
     const res = await axios.get(url);
 
     if (res.status !== StatusCodes.OK) {

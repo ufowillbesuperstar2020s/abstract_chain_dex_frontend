@@ -150,8 +150,6 @@ function ExplorePageInner() {
   const handleNewToggle = () => {
     setIsNew((v) => !v);
     setIndex(0);
-
-    setSort((s) => (s.key === 'ageSeconds' && s.dir === 'asc' ? DEFAULT_SORT : { key: 'ageSeconds', dir: 'asc' }));
   };
 
   const handleToggleFilters = () => {
@@ -286,7 +284,7 @@ function ExplorePageInner() {
       index,
       limit,
       order_by: 'liquidity desc',
-      filters,
+      filters: effectiveFilters,
 
       onMessage: (update: PairRealtimeUpdate) => {
         usePairsStore.getState().updatePair(update);
@@ -446,7 +444,7 @@ function ExplorePageInner() {
               Favorites
             </FilterPill>
             <FilterPill
-              active={sort.key === 'ageSeconds' && sort.dir === 'asc'}
+              active={isNew}
               onClick={handleNewToggle}
               activeVariant="green"
               leftIcon={<Image width={12} height={12} src="/images/icons/new.svg" alt="New" />}
