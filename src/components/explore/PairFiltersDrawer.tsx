@@ -14,11 +14,15 @@ type Props = {
 
 const cx = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(' ');
 
+type StringFilterKey = {
+  [K in keyof PairFilters]-?: PairFilters[K] extends string | undefined ? K : never;
+}[keyof PairFilters];
+
 function NumberRangeRow(props: {
   label: string;
   prefix?: string;
-  minKey: keyof PairFilters;
-  maxKey: keyof PairFilters;
+  minKey: StringFilterKey;
+  maxKey: StringFilterKey;
   draft: PairFilters;
   onChangeDraft: (next: PairFilters) => void;
 }) {

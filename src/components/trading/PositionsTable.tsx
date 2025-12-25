@@ -74,7 +74,7 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
   const tokenMetaSingle = useTokenInfoStore((s) => s.tokenMetadata);
   const metricsSingle = useTokenMetricsStore((s) => s.metrics);
 
-  // ✅ IMPORTANT: subscribe to maps so component re-renders when they update
+  // subscribe to maps so component re-renders when they update
   const metaMap = useTokenInfoStore((s) => s.metaMap);
   const metricsMap = useTokenMetricsStore((s) => s.metricsMap);
 
@@ -112,26 +112,19 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
   }, [filteredData, loadTokenMetadata, loadMetrics]);
 
   const rows: Row[] = React.useMemo(() => {
-    // console.log('wang_filteredData', filteredData);
     return filteredData
       .map<Row>((p) => {
         const addr = p.token_address.toLowerCase();
 
-        // ✅ per-token meta (from metaMap) or fallback
+        // per-token meta (from metaMap) or fallback
         const meta = metaMap[addr] ?? tokenMetaSingle;
         const decimals = meta?.decimals ?? 18;
         const tokenSymbol = meta?.symbol ?? 'Token';
 
-        // ✅ per-token metrics (from metricsMap) or
-        // console.log('wang_addr', addr);
+        // per-token metrics (from metricsMap) or
         const mLite = metricsMap[addr];
 
-        // console.log('wang_mLite', mLite);
-        // console.log('wang_mLite', mLite);
-        console.log('wang_metricsSingle', metricsSingle);
-
         const tokenPriceUsd = mLite?.usdPrice ?? metricsSingle?.usdPrice ?? 0;
-        // console.log('wang_tokenPriceUsd', tokenPriceUsd);
 
         const balance = humanFromRaw(p.current_value, decimals);
         const currentValueUsd = balance * tokenPriceUsd;
