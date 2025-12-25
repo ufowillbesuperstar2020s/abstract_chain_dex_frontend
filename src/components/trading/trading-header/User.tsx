@@ -4,12 +4,16 @@ import { useAccount } from 'wagmi';
 import { useLoginWithAbstract } from '@abstract-foundation/agw-react';
 import Image from 'next/image';
 import { shortAddress } from '@/utils/shortAddress';
+import { copyToClipboard } from '@/utils/copyToClipboard';
+import Toast from '@/components/ui/toast/Toast';
 
 export default function User() {
   const [open, setOpen] = useState(false);
 
   const { logout } = useLoginWithAbstract();
   const { address } = useAccount();
+
+  const [toast, setToast] = useState(false);
 
   // Wrap trigger + dropdown so we can detect outside clicks
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -50,6 +54,19 @@ export default function User() {
         <span className="max-w-[140px] truncate text-base leading-none font-medium">
           {address ? shortAddress(address) : ''}
         </span>
+
+        <button
+          onClick={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!address) return;
+            const ok = await copyToClipboard(address);
+            if (ok) setToast(true);
+          }}
+          className="flex items-center rounded-md transition hover:bg-white/10"
+        >
+          <Image src="/images/icons/copy.svg" width={16} height={16} alt="copy" />
+        </button>
 
         {/* Chevron (menu trigger) */}
         <button
@@ -121,6 +138,8 @@ export default function User() {
           <span className="text-sm">Log Out</span>
         </div>
       </div>
+
+      <Toast message="Address copied to clipboard" show={toast} onClose={() => setToast(false)} />
     </div>
   );
 }

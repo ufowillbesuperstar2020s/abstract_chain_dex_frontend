@@ -22,7 +22,7 @@ export default function PortfolioPage() {
       <h5 className="mt-8 text-xl text-white">Token Holdings List</h5>
 
       {/* Token Holdings List */}
-      <section className="mt-4">
+      <section className="mt-6">
         <PositionsTable walletAddress={address} />
       </section>
     </div>
