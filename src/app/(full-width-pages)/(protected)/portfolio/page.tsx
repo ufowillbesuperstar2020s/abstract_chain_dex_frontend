@@ -1,39 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import HoldingsTable, { HoldingRow } from '@/components/portfolio/HoldingsTable';
-import QuickConvert from '@/components/portfolio/QuickConvert';
-import Image from 'next/image';
+import React from 'react';
+import { useAccount } from 'wagmi';
+import PositionsTable from '@/components/trading/PositionsTable';
 
 export default function PortfolioPage() {
-  // wnag_TODO: swap this mock with real wallet + pricing + cost basis data.
-  const [rows] = useState<HoldingRow[]>([
-    {
-      symbol: 'BTC',
-      name: 'Bitcoin',
-      balance: 2.5,
-      priceUSD: 1740,
-      costBasisUSD: 3800,
-      iconUrl: '/images/icons/token_dollars.svg'
-    },
-    {
-      symbol: 'ETH',
-      name: 'Ethereum',
-      balance: 2.5,
-      priceUSD: 1740,
-      costBasisUSD: 3800,
-      iconUrl: '/images/icons/token_dollars.svg'
-    },
-    {
-      symbol: 'BNB',
-      name: 'Binance Coin',
-      balance: 2.5,
-      priceUSD: 1740,
-      costBasisUSD: 3800,
-      iconUrl: '/images/icons/token_dollars.svg'
-    }
-  ]);
-
+  const { address } = useAccount();
   return (
     <div className="mx-auto w-[min(92vw,1700px)] px-6 py-6 xl:px-8">
       {/* decorative glow */}
@@ -51,46 +23,8 @@ export default function PortfolioPage() {
 
       {/* Token Holdings List */}
       <section className="mt-4">
-        <HoldingsTable rows={rows} />
+        <PositionsTable walletAddress={address} />
       </section>
-
-      {/* Quick Convert + actions */}
-      <section className="mt-8">
-        <QuickConvert onSubmit={(data) => console.log('convert request', data)} />
-      </section>
-
-      <div className="mt-8 flex items-start justify-end gap-5">
-        <button className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#0eb980] px-5 py-3 text-sm font-bold text-black hover:opacity-90">
-          Send
-          <Image width={4} height={4} src="/images/icons/arrow_right.svg" alt="" className="mr-1 h-4 w-4" />
-        </button>
-        <button className="flex items-center gap-2 rounded-lg border border-emerald-300 px-4 py-3 text-sm font-medium text-emerald-300 hover:bg-white/5">
-          Transfer
-          <Image width={4} height={4} src="/images/icons/arrow_back.svg" alt="" className="mr-1 h-4 w-4" />
-        </button>
-        <button
-          className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-transparent px-4 py-3 text-sm font-medium text-emerald-300 hover:bg-white/5"
-          onClick={() => {
-            const header = ['Token', 'Balance', 'Price(USD)', 'Current Value', 'Cost Basis', 'PnL(USD)'];
-            const lines = rows.map((r) => {
-              const current = r.balance * r.priceUSD;
-              const pnl = current - r.costBasisUSD;
-              return [r.name, r.balance, r.priceUSD, current, r.costBasisUSD, pnl].join(',');
-            });
-            const csv = [header.join(','), ...lines].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'portfolio.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-          }}
-        >
-          Export
-          <Image width={4} height={4} src="/images/icons/arrow_export.svg" alt="" className="mr-1 h-4 w-4" />
-        </button>
-      </div>
     </div>
   );
 }

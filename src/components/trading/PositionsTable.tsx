@@ -30,22 +30,18 @@ type Row = {
 function humanFromRaw(raw: string, decimals: number): number {
   if (!raw) return 0;
 
-  // Use scientific calculation to avoid overflow
   const asNumber = Number(raw);
   if (Number.isFinite(asNumber)) {
     return asNumber / Math.pow(10, decimals);
   }
 
-  // fallback for extremely large values: slice strings
   const len = raw.length;
-
   if (len <= decimals) {
     return Number(`0.${raw.padStart(decimals, '0')}`);
   }
 
   const intPart = raw.slice(0, len - decimals);
   const fracPart = raw.slice(len - decimals);
-
   return Number(intPart + '.' + fracPart);
 }
 
@@ -74,12 +70,16 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
   const loadingByWallet = usePositionsStore((s) => s.loadingByWallet);
   const errorByWallet = usePositionsStore((s) => s.errorByWallet);
 
-  const tokenMeta = useTokenInfoStore((s) => s.tokenMetadata);
-  const metrics = useTokenMetricsStore((s) => s.metrics);
+  // Single-token (token page) fields (keep as fallback)
+  const tokenMetaSingle = useTokenInfoStore((s) => s.tokenMetadata);
+  const metricsSingle = useTokenMetricsStore((s) => s.metrics);
 
-  const decimals = tokenMeta?.decimals ?? 18;
-  const tokenSymbol = tokenMeta?.symbol ?? 'Token';
-  const tokenPriceUsd = metrics?.usdPrice ?? 0;
+  // Multi-token map APIs (this is the key fix)
+  const loadTokenMetadata = useTokenInfoStore((s) => s.loadTokenMetadata);
+  const getTokenMetadata = useTokenInfoStore((s) => s.getTokenMetadata);
+
+  const loadMetrics = useTokenMetricsStore((s) => s.loadMetrics);
+  const getMetrics = useTokenMetricsStore((s) => s.getMetrics);
 
   React.useEffect(() => {
     if (!wallet) return;
@@ -96,15 +96,48 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
     return rawData.filter((p) => p.token_address.toLowerCase() === t);
   }, [rawData, tokenAddress]);
 
+  // IMPORTANT:
+  // Portfolio page does NOT populate tokenMetadata/metrics.
+  // So we load meta+metrics for every token found in positions.
+  React.useEffect(() => {
+    if (!filteredData.length) return;
+
+    const uniq = Array.from(new Set(filteredData.map((p) => p.token_address.toLowerCase())));
+
+    void (async () => {
+      for (const addr of uniq) {
+        // load meta first (metricsMap needs decimals from metaMap)
+        await loadTokenMetadata(addr);
+        await loadMetrics(addr);
+      }
+    })();
+  }, [filteredData, loadTokenMetadata, loadMetrics]);
+
   const rows: Row[] = React.useMemo(() => {
     return filteredData
       .map<Row>((p) => {
+        const addr = p.token_address.toLowerCase();
+
+        // Prefer per-token metadata/metrics (works on Portfolio)
+        const meta = getTokenMetadata(addr) ?? tokenMetaSingle;
+
+        const mLite = getMetrics(addr);
+
+        console.log('wang_mLite', mLite);
+
+        const decimals = meta?.decimals ?? 18;
+        const tokenSymbol = meta?.symbol ?? 'Token';
+
+        // Prefer per-token price; fall back to single-token price (works on token page)
+        const tokenPriceUsd =
+          (mLite?.usdPrice ?? null) !== null && mLite?.usdPrice !== undefined
+            ? mLite.usdPrice
+            : (metricsSingle?.usdPrice ?? 0);
+
         const balance = humanFromRaw(p.current_value, decimals);
 
-        const currentValueUsd = balance * tokenPriceUsd;
-
+        const currentValueUsd = balance * (tokenPriceUsd ?? 0);
         const costBasisUsd = toNum(p.cost);
-
         const entryPriceUsd = balance > 0 ? costBasisUsd / balance : 0;
 
         const pnlAbsUsd = currentValueUsd - costBasisUsd;
@@ -122,7 +155,7 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
         };
       })
       .sort((a, b) => b.currentValueUsd - a.currentValueUsd);
-  }, [filteredData, decimals, tokenPriceUsd, tokenSymbol]);
+  }, [filteredData, getTokenMetadata, getMetrics, tokenMetaSingle, metricsSingle]);
 
   if (!wallet) {
     return (
@@ -195,7 +228,7 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
 
         <tbody className="divide-y divide-white/5">
           {rows.map((r) => (
-            <tr key={r.tokenAddress} className="text-sm">
+            <tr key={r.tokenAddress + String(r.entryPriceUsd)} className="text-sm">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
                   <Image width={4} height={4} src="/images/icons/token_dollars.svg" alt="" className="mr-1 h-4 w-4" />
@@ -219,6 +252,7 @@ export default function PositionsTable({ tokenAddress, walletAddress }: Props) {
                   <span>{(r.pnlPct >= 0 ? '+' : '') + (r.pnlPct * 100).toFixed(2)}%</span>
                 </div>
               </td>
+
               <td className="text-left">
                 {r.pnlAbsUsd >= 0 ? (
                   <i className="fa-notdog-duo fa-solid fa-angle-up text-emerald-600"></i>
