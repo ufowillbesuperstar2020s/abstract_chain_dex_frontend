@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 type ConvertForm = { from: string; to: string; amount: number };
 type Props = { onSubmit: (data: ConvertForm) => void };
 
-const TOKENS = ['BTC', 'ETH', 'BNB']; // wang_TODO: replace with wallet tokens
+const TOKENS = ['BTC', 'ETH', 'BNB']; // TODO: replace with wallet tokens
 
 export default function QuickConvert({ onSubmit }: Props) {
   const [from, setFrom] = useState('');
